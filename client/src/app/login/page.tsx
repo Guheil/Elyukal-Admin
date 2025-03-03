@@ -19,35 +19,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
-// Enhanced color palette with more vibrant colors
-const styles = {
-    colors: {
-        primary: "#0052D4",
-        secondary: "#FFD700",
-        gold: "#FFC107",
-        white: "#FFFFFF",
-        black: "#000000",
-        gray: "#5A6472",
-        lightgray: "#F0F4F8",
-        container: "#EEF2F7",
-        accent: "#1A365D",
-        highlight: "#2196F3",
-        success: "#00C853",
-        gradient: {
-            start: "#0052D4",
-            middle: "#4364F7",
-            end: "#6FB1FC"
-        },
-        error: "#FF5252"
-    }
-};
 
-const FONTS = {
-    regular: 'Open Sans, sans-serif',
-    bold: 'Open Sans, sans-serif',
-    semibold: 'Open Sans, sans-serif',
-};
+
 
 const formSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address" }),
@@ -62,7 +38,7 @@ export default function AdminLoginPage() {
     const [animateBackground, setAnimateBackground] = useState(false);
     const DUMMY_EMAIL = "123@gmail.com";
     const DUMMY_PASSWORD = "12345";
-    // Animation trigger
+
     useEffect(() => {
         setAnimateBackground(true);
     }, []);
@@ -117,12 +93,12 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen grid grid-cols-1 md:grid-cols-2" style={{ backgroundColor: styles.colors.container }}>
+        <div className="min-h-screen grid grid-cols-1 md:grid-cols-2" style={{ backgroundColor: COLORS.container }}>
             {/* Left side - Brand panel with gradient background */}
             <div
                 className={`hidden md:flex flex-col justify-between items-center p-12 text-white relative overflow-hidden transition-all duration-1000 ${animateBackground ? 'opacity-100' : 'opacity-0'}`}
                 style={{
-                    background: `linear-gradient(135deg, ${styles.colors.gradient.start}, ${styles.colors.gradient.middle}, ${styles.colors.gradient.end})`,
+                    background: `linear-gradient(135deg, ${COLORS.gradient.start}, ${COLORS.gradient.middle}, ${COLORS.gradient.end})`,
                     boxShadow: '0 10px 30px rgba(0, 82, 212, 0.3)'
                 }}
             >
@@ -145,7 +121,7 @@ export default function AdminLoginPage() {
                 <div className="relative z-10">
                     <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 duration-300">
-                            <ShoppingBag className="h-7 w-7" style={{ color: styles.colors.primary }} />
+                            <ShoppingBag className="h-7 w-7" style={{ color: COLORS.primary }} />
                         </div>
                         <h1 className="text-2xl font-bold tracking-wider" style={{ fontFamily: FONTS.bold }}>PRODUKTO ELYU-KAL</h1>
                     </div>
@@ -154,7 +130,7 @@ export default function AdminLoginPage() {
                         style={{
                             backgroundColor: 'rgba(255, 255, 255, 0.2)',
                             backdropFilter: 'blur(5px)',
-                            color: styles.colors.gold,
+                            color: COLORS.gold,
                             fontFamily: FONTS.semibold
                         }}>
                         <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -167,11 +143,11 @@ export default function AdminLoginPage() {
                         Admin Portal for <span
                             className="relative"
                             style={{
-                                color: styles.colors.gold,
+                                color: COLORS.gold,
                                 textShadow: '0 0 15px rgba(255, 193, 7, 0.3)'
                             }}>
                             PRODUKTO ELYU-KAL
-                            <span className="absolute -bottom-1 left-0 w-full h-1 rounded-full" style={{ backgroundColor: styles.colors.gold, opacity: 0.7 }}></span>
+                            <span className="absolute -bottom-1 left-0 w-full h-1 rounded-full" style={{ backgroundColor: COLORS.gold, opacity: 0.7 }}></span>
                         </span>
                     </h2>
                     <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular, lineHeight: 1.6 }}>
@@ -180,22 +156,22 @@ export default function AdminLoginPage() {
 
                     <div className="grid grid-cols-2 gap-4 pt-6">
                         <FeatureCard
-                            icon={<ShoppingBag className="h-5 w-5" style={{ color: styles.colors.gold }} />}
+                            icon={<ShoppingBag className="h-5 w-5" style={{ color: COLORS.gold }} />}
                             title="Product Management"
                             description="Control product listings and AR assets"
                         />
                         <FeatureCard
-                            icon={<Activity className="h-5 w-5" style={{ color: styles.colors.gold }} />}
+                            icon={<Activity className="h-5 w-5" style={{ color: COLORS.gold }} />}
                             title="Analytics"
                             description="Track user engagement and sales"
                         />
                         <FeatureCard
-                            icon={<MapPin className="h-5 w-5" style={{ color: styles.colors.gold }} />}
+                            icon={<MapPin className="h-5 w-5" style={{ color: COLORS.gold }} />}
                             title="Geolocation Hub"
                             description="Manage location-based services"
                         />
                         <FeatureCard
-                            icon={<ShieldCheck className="h-5 w-5" style={{ color: styles.colors.gold }} />}
+                            icon={<ShieldCheck className="h-5 w-5" style={{ color: COLORS.gold }} />}
                             title="Security"
                             description="Protect user and product data"
                         />
@@ -211,7 +187,7 @@ export default function AdminLoginPage() {
                 <div className="relative z-10 space-y-4">
                     <div className="flex items-center space-x-4">
                         <div className="flex -space-x-2">
-                            {[styles.colors.gold, '#FF6B6B', '#48DBFB', '#1DD1A1'].map((color, index) => (
+                            {[COLORS.gold, '#FF6B6B', '#48DBFB', '#1DD1A1'].map((color, index) => (
                                 <div key={index} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold"
                                     style={{ backgroundColor: color, zIndex: 4 - index }}>
                                     {['AK', 'LM', 'TS', 'PD'][index]}
@@ -230,34 +206,34 @@ export default function AdminLoginPage() {
             </div>
 
             {/* Right side - Login form with enhanced visual appeal */}
-            <div className="flex flex-col justify-center p-4 sm:p-10 relative" style={{ backgroundColor: styles.colors.white }}>
+            <div className="flex flex-col justify-center p-4 sm:p-10 relative" style={{ backgroundColor: COLORS.white }}>
                 {/* Subtle background pattern */}
                 <div className="absolute inset-0 opacity-5 pointer-events-none">
-                    <div className="absolute right-10 top-10 w-64 h-64 rounded-full" style={{ background: `radial-gradient(circle, ${styles.colors.gradient.middle}, transparent)` }}></div>
-                    <div className="absolute left-10 bottom-10 w-48 h-48 rounded-full" style={{ background: `radial-gradient(circle, ${styles.colors.gradient.start}, transparent)` }}></div>
+                    <div className="absolute right-10 top-10 w-64 h-64 rounded-full" style={{ background: `radial-gradient(circle, ${COLORS.gradient.middle}, transparent)` }}></div>
+                    <div className="absolute left-10 bottom-10 w-48 h-48 rounded-full" style={{ background: `radial-gradient(circle, ${COLORS.gradient.start}, transparent)` }}></div>
                 </div>
 
                 <div className="mx-auto w-full max-w-md space-y-8 relative">
                     <div className="text-center md:text-left">
                         <div className="md:hidden flex items-center justify-center space-x-3 mb-8">
                             <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg" style={{
-                                background: `linear-gradient(135deg, ${styles.colors.gradient.start}, ${styles.colors.gradient.end})`,
+                                background: `linear-gradient(135deg, ${COLORS.gradient.start}, ${COLORS.gradient.end})`,
                                 boxShadow: '0 4px 10px rgba(0, 82, 212, 0.3)'
                             }}>
                                 <ShoppingBag className="h-7 w-7 text-white" />
                             </div>
-                            <h1 className="text-2xl font-bold tracking-wider" style={{ color: styles.colors.accent, fontFamily: FONTS.bold }}>PRODUKTO ELYU-KAL</h1>
+                            <h1 className="text-2xl font-bold tracking-wider" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>PRODUKTO ELYU-KAL</h1>
                         </div>
-                        <h2 className="text-3xl font-bold mb-2" style={{ color: styles.colors.accent, fontFamily: FONTS.bold }}>Admin Login</h2>
-                        <p style={{ color: styles.colors.gray, fontFamily: FONTS.regular }} className="text-lg">
+                        <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>Admin Login</h2>
+                        <p style={{ color: COLORS.gray, fontFamily: FONTS.regular }} className="text-lg">
                             Securely access the admin panel to manage La Union's local products.
                         </p>
                     </div>
 
                     <Card className="border-0 shadow-xl rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl"
                         style={{
-                            backgroundColor: styles.colors.white,
-                            borderTop: `4px solid ${styles.colors.primary}`
+                            backgroundColor: COLORS.white,
+                            borderTop: `4px solid ${COLORS.primary}`
                         }}>
                         <CardContent className="p-8">
                             <Form {...form}>
@@ -267,27 +243,27 @@ export default function AdminLoginPage() {
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-medium text-base mb-1" style={{ color: styles.colors.accent, fontFamily: FONTS.semibold }}>
+                                                <FormLabel className="font-medium text-base mb-1" style={{ color: COLORS.accent, fontFamily: FONTS.semibold }}>
                                                     Email
                                                 </FormLabel>
                                                 <FormControl>
                                                     <div className="relative transition-all duration-200 focus-within:ring-2 focus-within:ring-offset-2 rounded-lg group">
                                                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors group-focus-within:text-primary"
-                                                            style={{ color: styles.colors.gray }} />
+                                                            style={{ color: COLORS.gray }} />
                                                         <Input
                                                             placeholder="admin@produktoelyu-kal.com"
                                                             className="pl-12 py-6 rounded-lg text-base border-2 transition-all focus:border-primary"
                                                             style={{
-                                                                backgroundColor: styles.colors.lightgray,
+                                                                backgroundColor: COLORS.lightgray,
                                                                 borderColor: 'transparent',
-                                                                color: styles.colors.accent,
+                                                                color: COLORS.accent,
                                                                 fontFamily: FONTS.regular,
                                                             }}
                                                             {...field}
                                                         />
                                                     </div>
                                                 </FormControl>
-                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: styles.colors.error, fontFamily: FONTS.regular }} />
+                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: COLORS.error, fontFamily: FONTS.regular }} />
                                             </FormItem>
                                         )}
                                     />
@@ -298,13 +274,13 @@ export default function AdminLoginPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <div className="flex justify-between items-center mb-1">
-                                                    <FormLabel className="font-medium text-base" style={{ color: styles.colors.accent, fontFamily: FONTS.semibold }}>
+                                                    <FormLabel className="font-medium text-base" style={{ color: COLORS.accent, fontFamily: FONTS.semibold }}>
                                                         Password
                                                     </FormLabel>
                                                     <Link
                                                         href="/forgot-password"
                                                         className="text-sm hover:underline transition-colors hover:text-primary"
-                                                        style={{ color: styles.colors.primary, fontFamily: FONTS.regular }}
+                                                        style={{ color: COLORS.primary, fontFamily: FONTS.regular }}
                                                     >
                                                         Forgot Password?
                                                     </Link>
@@ -312,15 +288,15 @@ export default function AdminLoginPage() {
                                                 <FormControl>
                                                     <div className="relative transition-all duration-200 focus-within:ring-2 focus-within:ring-offset-2 rounded-lg group">
                                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors group-focus-within:text-primary"
-                                                            style={{ color: styles.colors.gray }} />
+                                                            style={{ color: COLORS.gray }} />
                                                         <Input
                                                             type={showPassword ? "text" : "password"}
                                                             placeholder="Enter your admin password"
                                                             className="pl-12 pr-12 py-6 rounded-lg text-base border-2 transition-all focus:border-primary"
                                                             style={{
-                                                                backgroundColor: styles.colors.lightgray,
+                                                                backgroundColor: COLORS.lightgray,
                                                                 borderColor: 'transparent',
-                                                                color: styles.colors.accent,
+                                                                color: COLORS.accent,
                                                                 fontFamily: FONTS.regular,
                                                             }}
                                                             {...field}
@@ -330,14 +306,14 @@ export default function AdminLoginPage() {
                                                             variant="ghost"
                                                             size="sm"
                                                             className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 transition-colors hover:text-primary"
-                                                            style={{ color: styles.colors.gray }}
+                                                            style={{ color: COLORS.gray }}
                                                             onClick={() => setShowPassword(!showPassword)}
                                                         >
                                                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                                         </Button>
                                                     </div>
                                                 </FormControl>
-                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: styles.colors.error, fontFamily: FONTS.regular }} />
+                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: COLORS.error, fontFamily: FONTS.regular }} />
                                             </FormItem>
                                         )}
                                     />
@@ -352,7 +328,7 @@ export default function AdminLoginPage() {
                                         <label
                                             htmlFor="remember-me"
                                             className="text-sm font-medium"
-                                            style={{ color: styles.colors.gray, fontFamily: FONTS.regular }}
+                                            style={{ color: COLORS.gray, fontFamily: FONTS.regular }}
                                         >
                                             Remember me for 30 days
                                         </label>
@@ -362,8 +338,8 @@ export default function AdminLoginPage() {
                                         type="submit"
                                         className="w-full font-medium py-6 rounded-lg text-base mt-6 transition-all duration-300 hover:shadow-lg transform hover:translate-y-[-2px] relative overflow-hidden group"
                                         style={{
-                                            background: `linear-gradient(90deg, ${styles.colors.gradient.start}, ${styles.colors.gradient.middle})`,
-                                            color: styles.colors.white,
+                                            background: `linear-gradient(90deg, ${COLORS.gradient.start}, ${COLORS.gradient.middle})`,
+                                            color: COLORS.white,
                                             fontFamily: FONTS.semibold,
                                         }}
                                         disabled={isLoading}
@@ -377,9 +353,9 @@ export default function AdminLoginPage() {
                                     </Button>
 
                                     <div className="pt-4 flex items-center justify-center gap-3">
-                                        <div className="flex-1 h-px" style={{ backgroundColor: styles.colors.lightgray }}></div>
-                                        <span className="text-sm" style={{ color: styles.colors.gray, fontFamily: FONTS.regular }}>OR</span>
-                                        <div className="flex-1 h-px" style={{ backgroundColor: styles.colors.lightgray }}></div>
+                                        <div className="flex-1 h-px" style={{ backgroundColor: COLORS.lightgray }}></div>
+                                        <span className="text-sm" style={{ color: COLORS.gray, fontFamily: FONTS.regular }}>OR</span>
+                                        <div className="flex-1 h-px" style={{ backgroundColor: COLORS.lightgray }}></div>
                                     </div>
 
                                     <Button
@@ -387,14 +363,14 @@ export default function AdminLoginPage() {
                                         className="w-full font-medium py-6 rounded-lg text-base transition-all duration-300 hover:shadow-md relative overflow-hidden group"
                                         style={{
                                             backgroundColor: 'white',
-                                            color: styles.colors.accent,
-                                            border: `2px solid ${styles.colors.gold}`,
+                                            color: COLORS.accent,
+                                            border: `2px solid ${COLORS.gold}`,
                                             fontFamily: FONTS.semibold,
                                         }}
                                     >
-                                        <span className="relative z-10" style={{ color: styles.colors.gold, fontFamily: FONTS.semibold }}>Sign in with SSO</span>
+                                        <span className="relative z-10" style={{ color: COLORS.gold, fontFamily: FONTS.semibold }}>Sign in with SSO</span>
                                         <span className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300"
-                                            style={{ background: styles.colors.gold }}></span>
+                                            style={{ background: COLORS.gold }}></span>
                                     </Button>
                                 </form>
                             </Form>
@@ -402,22 +378,22 @@ export default function AdminLoginPage() {
                     </Card>
 
                     <div className="mt-6 space-y-4">
-                        <div className="text-center" style={{ color: styles.colors.gray, fontFamily: FONTS.regular }}>
+                        <div className="text-center" style={{ color: COLORS.gray, fontFamily: FONTS.regular }}>
                             Need help? Contact <span className="font-medium cursor-pointer hover:underline transition-colors"
-                                style={{ color: styles.colors.primary, fontFamily: FONTS.semibold }}>Support Team</span>
+                                style={{ color: COLORS.primary, fontFamily: FONTS.semibold }}>Support Team</span>
                         </div>
 
                         <div className="flex items-center justify-center gap-2 pt-2 text-center text-sm px-8"
-                            style={{ color: styles.colors.gray, fontFamily: FONTS.regular }}>
-                            <ShieldCheck className="h-4 w-4 flex-shrink-0" style={{ color: styles.colors.primary }} />
+                            style={{ color: COLORS.gray, fontFamily: FONTS.regular }}>
+                            <ShieldCheck className="h-4 w-4 flex-shrink-0" style={{ color: COLORS.primary }} />
                             <span>Protected by advanced security protocols. Unauthorized access attempts will be logged.</span>
                         </div>
 
                         {/* Latest login indicator */}
                         <div className="text-center text-xs py-2 px-4 rounded-lg mx-auto w-max opacity-80"
                             style={{
-                                backgroundColor: styles.colors.lightgray,
-                                color: styles.colors.gray,
+                                backgroundColor: COLORS.lightgray,
+                                color: COLORS.gray,
                                 fontFamily: FONTS.regular
                             }}>
                             Last successful login: Today, 09:45 AM from La Union
@@ -449,7 +425,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description }) =
                 {icon}
             </div>
             <div className="font-medium text-lg group-hover:translate-x-1 transition-transform"
-                style={{ color: styles.colors.gold, fontFamily: FONTS.semibold }}>
+                style={{ color: COLORS.gold, fontFamily: FONTS.semibold }}>
                 {title}
             </div>
         </div>
@@ -466,7 +442,7 @@ interface StatusIndicatorProps {
 const StatusIndicator: React.FC<StatusIndicatorProps> = ({ label, status, active }) => (
     <div className="flex items-center gap-2 text-xs">
         <div className={`w-2 h-2 rounded-full ${active ? 'animate-pulse' : ''}`}
-            style={{ backgroundColor: active ? styles.colors.gold : 'rgba(255, 255, 255, 0.5)' }}></div>
+            style={{ backgroundColor: active ? COLORS.gold : 'rgba(255, 255, 255, 0.5)' }}></div>
         <div>
             <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontFamily: FONTS.regular }}>{label}</div>
             <div className="font-medium" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.semibold }}>{status}</div>

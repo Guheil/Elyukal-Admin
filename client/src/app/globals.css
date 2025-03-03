@@ -1,10 +1,12 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500&family=Exo+2:wght@400;700&family=Rajdhani:wght@600&display=swap');
 
-.font-open-sans-regular { font-family: 'Open Sans', sans-serif; font-weight: 400; }
-.font-open-sans-light { font-family: 'Open Sans', sans-serif; font-weight: 300; }
-.font-open-sans-semibold { font-family: 'Open Sans', sans-serif; font-weight: 600; }
-.font-open-sans-bold { font-family: 'Open Sans', sans-serif; font-weight: 700; }
+.font-orbitron-regular { font-family: 'Orbitron', sans-serif; font-weight: 400; }
+.font-orbitron-medium { font-family: 'Orbitron', sans-serif; font-weight: 500; }
+.font-exo2-regular { font-family: 'Exo 2', sans-serif; font-weight: 400; }
+.font-exo2-bold { font-family: 'Exo 2', sans-serif; font-weight: 700; }
+.font-rajdhani-semibold { font-family: 'Rajdhani', sans-serif; font-weight: 600; }
 
 
 @plugin "tailwindcss-animate";
@@ -12,8 +14,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Orbitron', sans-serif; /* Updated to a futuristic default */
+  --font-mono: var(--font-geist-mono); /* Keeping mono as is */
 }
 
 :root {
