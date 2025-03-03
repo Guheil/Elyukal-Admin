@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dependency lock files (if not needed)
+Pipfile.lock
+
+# Logs and temporary files
+*.log
+*.pid
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# OneDrive sync artifacts (if applicable)
+*.sync
