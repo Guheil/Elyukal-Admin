@@ -6,7 +6,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
-import { Eye, EyeOff, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, MapPin, ShoppingBag, ShieldCheck, Mail, Lock } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,20 +17,32 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Custom color palette to match React Native project
+// Enhanced color palette with more vibrant colors
 const styles = {
     colors: {
-        primary: "#0c58bb",
+        primary: "#0052D4",
         secondary: "#FFD700",
-        gold: "#EEBC1D",
-        white: "#FEFEFE",
+        gold: "#FFC107", 
+        white: "#FFFFFF",
         black: "#000000",
-        gray: "#727D73",
-        lightgray: "#ECEBDE",
-        container: "#F1F5F9",
-        accent: "#1E293B",
-        highlight: "#3498DB",
+        gray: "#5A6472", 
+        lightgray: "#F0F4F8", 
+        container: "#EEF2F7", 
+        accent: "#1A365D", 
+        highlight: "#2196F3", 
+        success: "#00C853", 
+        gradient: {
+            start: "#0052D4",
+            middle: "#4364F7",
+            end: "#6FB1FC"
+        }
     }
+};
+
+const FONTS = {
+    regular: 'Open Sans, sans-serif',
+    bold: 'Open Sans, sans-serif',
+    semibold: 'Open Sans, sans-serif',
 };
 
 const formSchema = z.object({
@@ -73,88 +85,110 @@ export default function AdminLoginPage() {
 
     return (
         <div className="min-h-screen grid grid-cols-1 md:grid-cols-2" style={{ backgroundColor: styles.colors.container }}>
-            {/* Left side - Brand panel */}
-            <div className="hidden md:flex flex-col justify-between p-8 text-white" style={{ backgroundColor: styles.colors.accent }}>
-                <div>
-                    <div className="flex items-center space-x-2">
-                        <ShieldCheck className="h-8 w-8" style={{ color: styles.colors.secondary }} />
-                        <h1 className="text-2xl font-bold">AdminPanel</h1>
+            {/* Left side - Brand panel with gradient background */}
+            <div
+                className="hidden md:flex flex-col justify-between p-10 text-white relative overflow-hidden"
+                style={{
+                    background: `linear-gradient(135deg, ${styles.colors.gradient.start}, ${styles.colors.gradient.middle}, ${styles.colors.gradient.end})`,
+                    boxShadow: '0 10px 30px rgba(0, 82, 212, 0.3)'
+                }}
+            >
+                {/* Background pattern elements for visual interest */}
+                <div className="absolute top-0 left-0 w-full h-full opacity-10">
+                    <div className="absolute top-10 left-10 w-40 h-40 rounded-full" style={{ background: 'white' }}></div>
+                    <div className="absolute bottom-40 right-20 w-60 h-60 rounded-full" style={{ background: 'white' }}></div>
+                </div>
+
+                <div className="relative z-10">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                            <ShoppingBag className="h-6 w-6" style={{ color: styles.colors.primary }} />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-wider" style={{ fontFamily: FONTS.bold }}>PRODUKTO ELYU-KAL</h1>
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    <h2 className="text-3xl font-bold leading-tight">
-                        Secure Admin Dashboard
+                <div className="space-y-8 relative z-10">
+                    <h2 className="text-4xl font-bold leading-tight" style={{ fontFamily: FONTS.bold }}>
+                        Admin Portal for <span style={{ color: styles.colors.gold }}>PRODUKTO ELYU-KAL</span>
                     </h2>
-                    <p className="max-w-md" style={{ color: styles.colors.lightgray }}>
-                        Access your administrative controls with enhanced security. Manage your organization's resources efficiently.
+                    <p className="max-w-md text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular }}>
+                        Manage La Union's local products and agri-tourism initiatives with advanced digital tools. Securely oversee product listings, user interactions, and analytics to boost local economic growth.
                     </p>
 
                     <div className="grid grid-cols-2 gap-4 pt-8">
-                        <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(14, 27, 51, 0.6)' }}>
-                            <div className="font-medium" style={{ color: styles.colors.gold }}>User Management</div>
-                            <div className="text-sm mt-1" style={{ color: styles.colors.lightgray }}>Control access and permissions</div>
+                        <div className="p-5 rounded-xl transition-all duration-300 hover:translate-y-[-5px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)' }}>
+                            <div className="font-medium text-lg mb-1" style={{ color: styles.colors.gold, fontFamily: FONTS.semibold }}>Product Management</div>
+                            <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular }}>Control product listings and AR assets</div>
                         </div>
-                        <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(14, 27, 51, 0.6)' }}>
-                            <div className="font-medium" style={{ color: styles.colors.gold }}>Analytics</div>
-                            <div className="text-sm mt-1" style={{ color: styles.colors.lightgray }}>Monitor system performance</div>
+                        <div className="p-5 rounded-xl transition-all duration-300 hover:translate-y-[-5px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)' }}>
+                            <div className="font-medium text-lg mb-1" style={{ color: styles.colors.gold, fontFamily: FONTS.semibold }}>Analytics</div>
+                            <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular }}>Track user engagement and sales</div>
                         </div>
-                        <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(14, 27, 51, 0.6)' }}>
-                            <div className="font-medium" style={{ color: styles.colors.gold }}>Security</div>
-                            <div className="text-sm mt-1" style={{ color: styles.colors.lightgray }}>Advanced protection protocols</div>
+                        <div className="p-5 rounded-xl transition-all duration-300 hover:translate-y-[-5px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)' }}>
+                            <div className="font-medium text-lg mb-1" style={{ color: styles.colors.gold, fontFamily: FONTS.semibold }}>Geolocation Hub</div>
+                            <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular }}>Manage location-based services</div>
                         </div>
-                        <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(14, 27, 51, 0.6)' }}>
-                            <div className="font-medium" style={{ color: styles.colors.gold }}>Configuration</div>
-                            <div className="text-sm mt-1" style={{ color: styles.colors.lightgray }}>System-wide settings</div>
+                        <div className="p-5 rounded-xl transition-all duration-300 hover:translate-y-[-5px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(10px)' }}>
+                            <div className="font-medium text-lg mb-1" style={{ color: styles.colors.gold, fontFamily: FONTS.semibold }}>Security</div>
+                            <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular }}>Protect user and product data</div>
                         </div>
                     </div>
                 </div>
 
-                <div className="text-sm" style={{ color: styles.colors.gray }}>
-                    © 2025 AdminPanel. All rights reserved.
+                <div className="text-sm relative z-10" style={{ color: 'rgba(255, 255, 255, 0.7)', fontFamily: FONTS.regular }}>
+                    © 2025 PRODUKTO ELYU-KAL. All rights reserved.
                 </div>
             </div>
 
-            {/* Right side - Login form */}
-            <div className="flex flex-col justify-center p-4 sm:p-8" style={{ backgroundColor: styles.colors.white }}>
-                <div className="mx-auto w-full max-w-md space-y-6">
+            {/* Right side - Login form with enhanced visual appeal */}
+            <div className="flex flex-col justify-center p-4 sm:p-10" style={{ backgroundColor: styles.colors.white }}>
+                <div className="mx-auto w-full max-w-md space-y-8">
                     <div className="text-center md:text-left">
-                        <div className="md:hidden flex items-center justify-center space-x-2 mb-6">
-                            <ShieldCheck className="h-8 w-8" style={{ color: styles.colors.primary }} />
-                            <h1 className="text-2xl font-bold" style={{ color: styles.colors.accent }}>AdminPanel</h1>
+                        <div className="md:hidden flex items-center justify-center space-x-3 mb-8">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{
+                                background: `linear-gradient(135deg, ${styles.colors.gradient.start}, ${styles.colors.gradient.end})`,
+                                boxShadow: '0 4px 10px rgba(0, 82, 212, 0.3)'
+                            }}>
+                                <ShoppingBag className="h-6 w-6 text-white" />
+                            </div>
+                            <h1 className="text-2xl font-bold tracking-wider" style={{ color: styles.colors.accent, fontFamily: FONTS.bold }}>PRODUKTO ELYU-KAL</h1>
                         </div>
-                        <h2 className="text-2xl font-bold" style={{ color: styles.colors.accent }}>Admin Login</h2>
-                        <p style={{ color: styles.colors.gray }} className="mt-2">Enter your credentials to access the control panel</p>
+                        <h2 className="text-3xl font-bold mb-2" style={{ color: styles.colors.accent, fontFamily: FONTS.bold }}>Admin Login</h2>
+                        <p style={{ color: styles.colors.gray, fontFamily: FONTS.regular }} className="text-lg">
+                            Securely access the admin panel to manage PRODUKTO ELYU-KAL's local products.
+                        </p>
                     </div>
 
-                    <Card className="border-0 shadow-lg" style={{ backgroundColor: styles.colors.white }}>
-                        <CardContent className="pt-6">
+                    <Card className="border-0 shadow-xl rounded-xl overflow-hidden" style={{ backgroundColor: styles.colors.white }}>
+                        <CardContent className="p-8">
                             <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                                     <FormField
                                         control={form.control}
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-medium" style={{ color: styles.colors.accent }}>
+                                                <FormLabel className="font-medium text-base mb-1" style={{ color: styles.colors.accent, fontFamily: FONTS.semibold }}>
                                                     Email
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <div className="relative">
-                                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: styles.colors.gray }} />
+                                                    <div className="relative transition-all duration-200 focus-within:ring-2 focus-within:ring-offset-2 rounded-lg">
+                                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: styles.colors.gray }} />
                                                         <Input
-                                                            placeholder="admin@company.com"
-                                                            className="pl-10"
+                                                            placeholder="admin@produktoelyu-kal.com"
+                                                            className="pl-12 py-6 rounded-lg text-base"
                                                             style={{
                                                                 backgroundColor: styles.colors.lightgray,
                                                                 borderColor: 'transparent',
-                                                                color: styles.colors.accent
+                                                                color: styles.colors.accent,
+                                                                fontFamily: FONTS.regular,
                                                             }}
                                                             {...field}
                                                         />
                                                     </div>
                                                 </FormControl>
-                                                <FormMessage className="text-sm" style={{ color: 'red' }} />
+                                                <FormMessage className="text-sm mt-1" style={{ color: 'red', fontFamily: FONTS.regular }} />
                                             </FormItem>
                                         )}
                                     />
@@ -164,29 +198,30 @@ export default function AdminLoginPage() {
                                         name="password"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <div className="flex justify-between items-center">
-                                                    <FormLabel className="font-medium" style={{ color: styles.colors.accent }}>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <FormLabel className="font-medium text-base" style={{ color: styles.colors.accent, fontFamily: FONTS.semibold }}>
                                                         Password
                                                     </FormLabel>
                                                     <Link
                                                         href="/forgot-password"
-                                                        className="text-xs hover:underline"
-                                                        style={{ color: styles.colors.primary }}
+                                                        className="text-sm hover:underline"
+                                                        style={{ color: styles.colors.primary, fontFamily: FONTS.regular }}
                                                     >
                                                         Forgot Password?
                                                     </Link>
                                                 </div>
                                                 <FormControl>
-                                                    <div className="relative">
-                                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: styles.colors.gray }} />
+                                                    <div className="relative transition-all duration-200 focus-within:ring-2 focus-within:ring-offset-2 rounded-lg">
+                                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: styles.colors.gray }} />
                                                         <Input
                                                             type={showPassword ? "text" : "password"}
-                                                            placeholder="Enter your password"
-                                                            className="pl-10 pr-10"
+                                                            placeholder="Enter your admin password"
+                                                            className="pl-12 pr-12 py-6 rounded-lg text-base"
                                                             style={{
                                                                 backgroundColor: styles.colors.lightgray,
                                                                 borderColor: 'transparent',
-                                                                color: styles.colors.accent
+                                                                color: styles.colors.accent,
+                                                                fontFamily: FONTS.regular,
                                                             }}
                                                             {...field}
                                                         />
@@ -194,58 +229,61 @@ export default function AdminLoginPage() {
                                                             type="button"
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="absolute right-0 top-0 h-full px-3"
+                                                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3"
                                                             style={{ color: styles.colors.gray }}
                                                             onClick={() => setShowPassword(!showPassword)}
                                                         >
-                                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                                         </Button>
                                                     </div>
                                                 </FormControl>
-                                                <FormMessage className="text-sm" style={{ color: 'red' }} />
+                                                <FormMessage className="text-sm mt-1" style={{ color: 'red', fontFamily: FONTS.regular }} />
                                             </FormItem>
                                         )}
                                     />
 
                                     <Button
                                         type="submit"
-                                        className="w-full font-medium py-2.5 rounded-md mt-2"
+                                        className="w-full font-medium py-6 rounded-lg text-base mt-4 transition-all duration-300 hover:shadow-lg transform hover:translate-y-[-2px]"
                                         style={{
-                                            backgroundColor: styles.colors.primary,
-                                            color: styles.colors.white
+                                            background: `linear-gradient(90deg, ${styles.colors.gradient.start}, ${styles.colors.gradient.middle})`,
+                                            color: styles.colors.white,
+                                            fontFamily: FONTS.semibold,
                                         }}
                                         disabled={isLoading}
                                     >
                                         {isLoading ? 'Authenticating...' : 'Login to Admin Panel'}
                                     </Button>
 
-                                    <div className="pt-4 flex items-center justify-center gap-2">
+                                    <div className="pt-4 flex items-center justify-center gap-3">
                                         <div className="flex-1 h-px" style={{ backgroundColor: styles.colors.lightgray }}></div>
-                                        <span className="text-xs" style={{ color: styles.colors.gray }}>OR</span>
+                                        <span className="text-sm" style={{ color: styles.colors.gray, fontFamily: FONTS.regular }}>OR</span>
                                         <div className="flex-1 h-px" style={{ backgroundColor: styles.colors.lightgray }}></div>
                                     </div>
 
                                     <Button
                                         type="button"
-                                        className="w-full font-medium py-2.5 rounded-md"
+                                        className="w-full font-medium py-6 rounded-lg text-base transition-all duration-300 hover:shadow-md"
                                         style={{
-                                            backgroundColor: 'transparent',
+                                            backgroundColor: 'white',
                                             color: styles.colors.accent,
-                                            border: `1px solid ${styles.colors.gold}`
+                                            border: `2px solid ${styles.colors.gold}`,
+                                            fontFamily: FONTS.semibold,
                                         }}
                                     >
-                                        <span style={{ color: styles.colors.gold }}>Sign in with SSO</span>
+                                        <span style={{ color: styles.colors.gold, fontFamily: FONTS.semibold }}>Sign in with SSO</span>
                                     </Button>
                                 </form>
                             </Form>
                         </CardContent>
                     </Card>
 
-                    <div className="text-center text-sm" style={{ color: styles.colors.gray }}>
-                        Need help? Contact <span className="font-medium" style={{ color: styles.colors.primary }}>IT Support</span>
+                    <div className="text-center" style={{ color: styles.colors.gray, fontFamily: FONTS.regular }}>
+                        Need help? Contact <span className="font-medium" style={{ color: styles.colors.primary, fontFamily: FONTS.semibold }}>Support Team</span>
                     </div>
 
-                    <div className="pt-4 text-center text-xs" style={{ color: styles.colors.gray }}>
+                    <div className="flex items-center justify-center gap-2 pt-4 text-center text-sm" style={{ color: styles.colors.gray, fontFamily: FONTS.regular }}>
+                        <ShieldCheck className="h-4 w-4" style={{ color: styles.colors.primary }} />
                         Protected by advanced security protocols. Unauthorized access attempts will be logged.
                     </div>
                 </div>
