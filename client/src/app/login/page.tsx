@@ -60,7 +60,8 @@ export default function AdminLoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [animateBackground, setAnimateBackground] = useState(false);
-
+    const DUMMY_EMAIL = "123@gmail.com";
+    const DUMMY_PASSWORD = "12345";
     // Animation trigger
     useEffect(() => {
         setAnimateBackground(true);
@@ -77,16 +78,38 @@ export default function AdminLoginPage() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsLoading(true);
         try {
-            const response = await axios.post('/api/auth/login', values);
-            const { token, user } = response.data;
+            // Dummy account check
+            if (values.email === DUMMY_EMAIL && values.password === DUMMY_PASSWORD) {
+                const dummyUser = {
+                    email: DUMMY_EMAIL,
+                    role: "admin",
+                    name: "Dummy Admin",
+                    id: "dummy-id",
+                    app_metadata: {},
+                    user_metadata: {},
+                    aud: "authenticated",
+                    created_at: new Date().toISOString()
+                };
 
-            localStorage.setItem('token', token);
-            setUser(user);
+                localStorage.setItem('token', 'dummy-token');
+                setUser(dummyUser);
 
-            toast.success('Login successful!');
-            router.push('/admin/dashboard');
+                toast.success('Login successful!');
+                router.push('/dashboard');
+            } else {
+
+                const response = await axios.post('/api/auth/login', values);
+                const { token, user } = response.data;
+
+                localStorage.setItem('token', token);
+                setUser(user);
+
+                toast.success('Login successful!');
+                router.push('/dashboard');
+            }
         } catch (error) {
-            const errorMessage = (error as any).response?.data?.message || 'Authentication failed. Please verify your credentials.';
+            const errorMessage = (error as any).response?.data?.message ||
+                'Authentication failed. Please verify your credentials. Try 123@gmail.com with password 12345';
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
