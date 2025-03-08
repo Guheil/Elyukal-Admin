@@ -37,7 +37,7 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="flex h-screen bg-container" style={{ backgroundColor: COLORS.container }}>
+        <div className="min-h-screen flex  bg-container" style={{ backgroundColor: COLORS.container }}>
             <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setSidebarCollapsed(!isSidebarCollapsed)} user={user} />
             <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
                 <Header user={user} notificationsCount={analyticsData.notifications.length} />
