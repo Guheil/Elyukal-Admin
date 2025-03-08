@@ -1,17 +1,18 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase";
 
-interface GuestUser {
-    guest: boolean;
+interface User {
+    email: string;
+    first_name: string;
+    last_name: string;
 }
-type UserType = User | GuestUser | null;
 
 interface AuthContextType {
-    user: UserType;
-    setUser: React.Dispatch<React.SetStateAction<UserType>>;
+    user: User | null;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
     loading: boolean;
-    loginAsGuest: () => void;
+    login: (email: string, password: string) => Promise<void>;
+    logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -21,69 +22,68 @@ interface AuthProviderProps {
 }
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
-    const [user, setUser] = useState<UserType>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchSession = async () => {
-            setLoading(true);
-
-            const {
-                data: { session },
-                error,
-            } = await supabase.auth.getSession();
-
-            console.log("🔵 Initial auth session:", { session, error });
-
-            if (session?.user) {
-                setUser(session.user);
-                console.log("✅ Logged in as User:", session.user);
-            } else {
-                console.log("🚫 No session found.");
+        const checkUser = async () => {
+            const token = localStorage.getItem("access_token");
+            if (token) {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setUser(data.profile);
+                    } else {
+                        localStorage.removeItem("access_token");
+                    }
+                } catch (error) {
+                    console.error("Profile fetch error:", error);
+                    localStorage.removeItem("access_token");
+                }
             }
-
             setLoading(false);
         };
-
-        fetchSession();
-
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-            console.log("🟡 Auth state changed:", { event: _event, session });
-
-            if (session?.user) {
-                setUser(session.user);
-                console.log("✅ User mode activated:", session.user);
-            } else {
-                setUser(null);
-                console.log("🚫 User logged out.");
-            }
-        });
-
-        return () => {
-            authListener?.subscription.unsubscribe();
-            console.log("🔴 Auth listener unsubscribed.");
-        };
+        checkUser();
     }, []);
 
-    // ✅ Log guest mode activation
-    const loginAsGuest = () => {
-        setUser({ guest: true });
-        console.log("🟢 Guest mode activated!");
+    const login = async (email: string, password: string) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "Login failed");
+            }
+            const data = await response.json();
+            localStorage.setItem("access_token", data.access_token);
+            setUser(data.user);
+        } catch (error) {
+            console.error("Login error:", error);
+            throw error;
+        }
+    };
+
+    const logout = () => {
+        localStorage.removeItem("access_token");
+        setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, loginAsGuest }}>
+        <AuthContext.Provider value={{ user, setUser, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
+    if (!context) throw new Error("useAuth must be used within an AuthProvider");
     return context;
 };
 

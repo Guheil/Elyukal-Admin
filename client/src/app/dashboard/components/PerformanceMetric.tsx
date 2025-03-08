@@ -16,7 +16,7 @@ export const PerformanceMetric = ({ icon, label, value, change, color }: Perform
             <div className="flex items-center gap-3">
                 <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${color}15` }} // Using 15% opacity for background
+                    style={{ backgroundColor: `${color}15` }} 
                 >
                     {icon}
                 </div>

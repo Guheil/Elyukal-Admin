@@ -1,32 +1,24 @@
-import os
-from dotenv import load_dotenv
+# app/main.py
 from fastapi import FastAPI
-from supabase import create_client, Client
 from fastapi.middleware.cors import CORSMiddleware
+from app.routes import auth
+import logging
 
-load_dotenv()
-app = FastAPI()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Elyukal Admin API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], 
+    allow_origins=["http://localhost:3000", "http://192.168.100.5:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-supabaseUrl = os.getenv("SUPABASE_URL")
-supabaseKey = os.getenv("SUPABASE_KEY")
+@app.get("/")
+def read_root():
+    return {"message": "Elyukal Admin API running!"}
 
-if not supabaseUrl or not supabaseKey:
-    raise ValueError("SUPABASE_URL or SUPABASE_KEY is missing in .env")
-
-supabase:Client = create_client(
-    supabaseUrl,
-    supabaseKey,
-)
-
-@app.get("/api/data")
-async def get_data():
-    response = supabase.table("products").select("*").execute()
-    return response
+app.include_router(auth.router)

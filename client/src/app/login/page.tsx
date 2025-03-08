@@ -22,9 +22,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
 
-
-
-
 const formSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address" }),
     password: z.string().min(1, { message: "Password is required" }),
@@ -36,8 +33,6 @@ export default function AdminLoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [animateBackground, setAnimateBackground] = useState(false);
-    const DUMMY_EMAIL = "123@gmail.com";
-    const DUMMY_PASSWORD = "12345";
 
     useEffect(() => {
         setAnimateBackground(true);
@@ -54,38 +49,41 @@ export default function AdminLoginPage() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsLoading(true);
         try {
-            // Dummy account check
-            if (values.email === DUMMY_EMAIL && values.password === DUMMY_PASSWORD) {
-                const dummyUser = {
-                    email: DUMMY_EMAIL,
-                    role: "admin",
-                    name: "Dummy Admin",
-                    id: "dummy-id",
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await axios.post(
+                `${baseUrl}/auth/login`,
+                { email: values.email, password: values.password },
+                {
+                    withCredentials: true, // Required for session cookies
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            // Validate response
+            if (response.status === 200) {
+                // Update user context (minimal data, as session is managed by backend)
+                setUser({
+                    email: values.email,
                     app_metadata: {},
                     user_metadata: {},
                     aud: "authenticated",
-                    created_at: new Date().toISOString()
-                };
-
-                localStorage.setItem('token', 'dummy-token');
-                setUser(dummyUser);
-
+                    created_at: new Date().toISOString(),
+                });
                 toast.success('Login successful!');
                 router.push('/dashboard');
             } else {
-
-                const response = await axios.post('/api/auth/login', values);
-                const { token, user } = response.data;
-
-                localStorage.setItem('token', token);
-                setUser(user);
-
-                toast.success('Login successful!');
-                router.push('/dashboard');
+                throw new Error('Invalid response from server');
             }
-        } catch (error) {
-            const errorMessage = (error as any).response?.data?.message ||
-                'Authentication failed. Please verify your credentials. Try 123@gmail.com with password 12345';
+        } catch (error: any) {
+            console.error('Login error:', error);
+            let errorMessage = 'Authentication failed. Please verify your credentials.';
+            if (error.response?.data?.detail) {
+                errorMessage = error.response.data.detail;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
