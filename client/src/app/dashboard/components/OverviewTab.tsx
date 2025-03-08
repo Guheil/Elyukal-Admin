@@ -4,19 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PerformanceMetric } from './PerformanceMetric';
 import { COLORS } from '../../constants/colors';
-import { Eye } from 'lucide-react';
+import { Eye, ShoppingCart, Users, TrendingUp, CheckCircle2, AlertTriangle, Activity, Package } from 'lucide-react';
 
 interface OverviewTabProps {
     analyticsData: any;
 }
 
 export default function OverviewTab({ analyticsData }: OverviewTabProps) {
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 0 }).format(amount);
-    const getGrowthClass = (growth: number) => growth >= 0 ? "text-success flex items-center gap-1" : "text-error flex items-center gap-1";
+    const getGrowthClass = (growth: number) =>
+        growth >= 0 ? "text-success flex items-center gap-1" : "text-error flex items-center gap-1";
+
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'Completed': return { bg: COLORS.success, text: 'white' };
-            // Other cases
+            case 'Active': return { bg: COLORS.success, text: 'white' };
+            case 'Pending': return { bg: COLORS.gradient.middle, text: 'white' };
+            case 'Low Stock': return { bg: COLORS.gold, text: 'black' };
             default: return { bg: COLORS.gray, text: 'white' };
         }
     };
@@ -24,51 +26,204 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Top Selling Products */}
                 <Card className="col-span-1 lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle style={{ color: COLORS.accent }}>Top Selling Products</CardTitle>
-                        <CardDescription>Products with the highest sales this month</CardDescription>
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <CardTitle style={{ color: COLORS.accent }}>Top Selling Products</CardTitle>
+                            <Button variant="ghost" size="sm" className="text-sm" style={{ color: COLORS.primary }}>
+                                View All
+                            </Button>
+                        </div>
+                        <CardDescription>Products with the highest visibility this month</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <table className="w-full">
-                            {/* Table content */}
+                            <thead>
+                                <tr className="text-left text-sm" style={{ color: COLORS.gray }}>
+                                    <th className="pb-3 font-medium">Product</th>
+                                    <th className="pb-3 font-medium">Category</th>
+                                    <th className="pb-3 font-medium text-right">Views</th>
+                                    <th className="pb-3 font-medium text-right">Growth</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {analyticsData.topProducts.map((product: any) => (
+                                    <tr key={product.id} className="border-t border-gray-100">
+                                        <td className="py-3">
+                                            <div className="font-medium" style={{ color: COLORS.accent }}>{product.name}</div>
+                                        </td>
+                                        <td className="py-3">
+                                            <Badge variant="outline" className="font-normal rounded-full" style={{ borderColor: COLORS.lightgray }}>
+                                                {product.category}
+                                            </Badge>
+                                        </td>
+                                        <td className="py-3 text-right font-medium">{product.sales}</td>
+                                        <td className="py-3 text-right">
+                                            <span className={getGrowthClass(product.growth)}>
+                                                {product.growth >= 0 ? (
+                                                    <TrendingUp size={14} />
+                                                ) : (
+                                                    <TrendingUp size={14} className="transform rotate-180" />
+                                                )}
+                                                {Math.abs(product.growth)}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
                         </table>
                     </CardContent>
                 </Card>
+
+                {/* Performance Metrics */}
                 <Card>
                     <CardHeader>
                         <CardTitle style={{ color: COLORS.accent }}>Performance Metrics</CardTitle>
+                        <CardDescription>Key metrics for this month</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <PerformanceMetric
-                            icon={<Eye size={18} style={{ color: COLORS.primary }} />}
-                            label="Product Views"
-                            value={analyticsData.productViews.toLocaleString()}
-                            change={8.2}
-                            color={COLORS.primary}
-                        />
-                        {/* Other metrics */}
+                        <div className="space-y-4">
+                            <PerformanceMetric
+                                icon={<Eye size={18} style={{ color: COLORS.primary }} />}
+                                label="Product Views"
+                                value={analyticsData.productViews.toLocaleString()}
+                                change={8.2}
+                                color={COLORS.primary}
+                            />
+                            <PerformanceMetric
+                                icon={<ShoppingCart size={18} style={{ color: COLORS.success }} />}
+                                label="Interest Rate"
+                                value={`${analyticsData.orderConversionRate}%`}
+                                change={1.5}
+                                color={COLORS.success}
+                            />
+                            <PerformanceMetric
+                                icon={<Package size={18} style={{ color: COLORS.gold }} />}
+                                label="Stock Availability"
+                                value={`${Math.round((analyticsData.totalProducts - analyticsData.pendingApproval) / analyticsData.totalProducts * 100)}%`}
+                                change={3.7}
+                                color={COLORS.gold}
+                            />
+                            <PerformanceMetric
+                                icon={<Users size={18} style={{ color: COLORS.gradient.middle }} />}
+                                label="New Visitors"
+                                value="235" // Hypothetical value
+                                change={15.3}
+                                color={COLORS.gradient.middle}
+                            />
+                        </div>
+                        <Button
+                            className="w-full"
+                            variant="outline"
+                            style={{ borderColor: COLORS.primary, color: COLORS.primary }}
+                        >
+                            View Detailed Analytics
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Recent Product Updates */}
                 <Card className="col-span-1 lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle style={{ color: COLORS.accent }}>Recent Orders</CardTitle>
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <CardTitle style={{ color: COLORS.accent }}>Recent Product Updates</CardTitle>
+                            <Button variant="ghost" size="sm" className="text-sm" style={{ color: COLORS.primary }}>
+                                View All Updates
+                            </Button>
+                        </div>
+                        <CardDescription>Latest changes to product listings</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <table className="w-full">
-                            {/* Orders table */}
+                            <thead>
+                                <tr className="text-left text-sm" style={{ color: COLORS.gray }}>
+                                    <th className="pb-3 font-medium">Product ID</th>
+                                    <th className="pb-3 font-medium">Product</th>
+                                    <th className="pb-3 font-medium">Updated By</th>
+                                    <th className="pb-3 font-medium">Date</th>
+                                    <th className="pb-3 font-medium">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {analyticsData.recentOrders.map((update: any) => {
+                                    const statusStyles = getStatusBadge(update.status === "Completed" ? "Active" : update.status === "Processing" ? "Pending" : "Low Stock");
+                                    return (
+                                        <tr key={update.id} className="border-t border-gray-100">
+                                            <td className="py-3 font-medium" style={{ color: COLORS.primary }}>{update.id}</td>
+                                            <td className="py-3">{update.product}</td>
+                                            <td className="py-3">{update.customer}</td>
+                                            <td className="py-3 text-sm" style={{ color: COLORS.gray }}>{update.date}</td>
+                                            <td className="py-3">
+                                                <Badge
+                                                    className="rounded-full px-2 py-1 text-xs font-normal"
+                                                    style={{ backgroundColor: statusStyles.bg, color: statusStyles.text }}
+                                                >
+                                                    {update.status === "Completed" ? "Active" : update.status === "Processing" ? "Pending" : "Low Stock"}
+                                                </Badge>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
                         </table>
                     </CardContent>
                 </Card>
+
+                {/* Notifications */}
                 <Card>
                     <CardHeader>
-                        <CardTitle style={{ color: COLORS.accent }}>Notifications</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <CardTitle style={{ color: COLORS.accent }}>Notifications</CardTitle>
+                            <Badge
+                                className="rounded-full px-2 py-1"
+                                style={{ backgroundColor: COLORS.primary, color: COLORS.white }}
+                            >
+                                {analyticsData.notifications.length} New
+                            </Badge>
+                        </div>
+                        <CardDescription>Recent system notifications</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {/* Notifications list */}
+                        <div className="space-y-4">
+                            {analyticsData.notifications.map((notification: any) => (
+                                <div key={notification.id} className="flex gap-3 pb-4 border-b border-gray-100">
+                                    <div className="pt-0.5">
+                                        {notification.type === 'alert' && (
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.error}20` }}>
+                                                <AlertTriangle size={16} style={{ color: COLORS.error }} />
+                                            </div>
+                                        )}
+                                        {notification.type === 'success' && (
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.success}20` }}>
+                                                <CheckCircle2 size={16} style={{ color: COLORS.success }} />
+                                            </div>
+                                        )}
+                                        {notification.type === 'info' && (
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.primary}20` }}>
+                                                <Activity size={16} style={{ color: COLORS.primary }} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium" style={{ color: COLORS.accent }}>{notification.message}</p>
+                                        <p className="text-xs" style={{ color: COLORS.gray }}>{notification.time}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </CardContent>
+                    <CardFooter>
+                        <Button
+                            variant="ghost"
+                            className="w-full text-sm"
+                            style={{ color: COLORS.primary }}
+                        >
+                            View All Notifications
+                        </Button>
+                    </CardFooter>
                 </Card>
             </div>
         </div>

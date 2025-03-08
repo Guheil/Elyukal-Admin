@@ -18,21 +18,22 @@ export default function Dashboard() {
     const analyticsData = {
         totalProducts: 283,
         pendingApproval: 17,
-        salesThisMonth: 158900,
+        // salesThisMonth: 158900, // Removed since no transactions
         visitors: 12483,
         activeLocations: 32,
         productViews: 46729,
-        orderConversionRate: 3.2,
+        orderConversionRate: 3.2, // Could be renamed to interestRate if preferred
         topProducts: [
-        { id: 1, name: "Ilocano Garlic", sales: 342, growth: 12.5, category: "Spices" },
-
+            { id: 1, name: "Virginia Tobacco", sales: 520, growth: 9.8, category: "Agriculture" }, // 'sales' as views
+            // ... other products
         ],
-        recentOrders: [
-            { id: "ORD-7291", product: "Bagnet Set", customer: "Maria Santos", date: "Mar 7, 2025", status: "Completed", amount: 1250 },
+        recentOrders: [ // Now recent updates
+            { id: "ORD-7301", product: "Inabel Fabric Set", customer: "Ana Mercado", date: "Mar 8, 2025", status: "Completed" },
+            // ... other updates
         ],
         notifications: [
-            { id: 1, type: "alert", message: "New product submission requires approval", time: "5 minutes ago" },
-        ]
+            // ... unchanged
+        ],
     };
 
     return (

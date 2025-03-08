@@ -1,7 +1,6 @@
-// StatsSection.tsx
 import React from 'react';
 import { StatsCard } from './StatsCard'; // Import the component
-import { Package, DollarSign, MapPin, Users } from 'lucide-react';
+import { Package, Eye, MapPin, Users } from 'lucide-react';
 import { COLORS } from '../../constants/colors';
 
 interface StatsSectionProps {
@@ -9,14 +8,6 @@ interface StatsSectionProps {
 }
 
 export default function StatsSection({ analyticsData }: StatsSectionProps) {
-    const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat('en-PH', {
-            style: 'currency',
-            currency: 'PHP',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatsCard
@@ -27,10 +18,10 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
                 color={COLORS.primary}
             />
             <StatsCard
-                title="Monthly Revenue"
-                value={formatCurrency(analyticsData.salesThisMonth)}
-                description="12.5% increase this month"
-                icon={<DollarSign />}
+                title="Monthly Views"
+                value={analyticsData.productViews.toLocaleString()}
+                description="8.2% increase this month"
+                icon={<Eye />}
                 color={COLORS.success}
             />
             <StatsCard
