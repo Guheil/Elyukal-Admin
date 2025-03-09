@@ -14,9 +14,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Session configuration
 SESSION_COOKIE_NAME = "session_id"
-SESSION_EXPIRY_MINUTES = 30  # Adjust as needed
+SESSION_EXPIRY_MINUTES = 30  
 
 def set_session_cookie(response: Response, session_id: str):
     """Set an HTTP-only session cookie with secure attributes."""
@@ -45,7 +44,7 @@ async def verify_session(request: Request) -> dict:
         logger.warning("No session cookie found")
         raise HTTPException(status_code=403, detail="Invalid session")
 
-    # Retrieve session from Supabase
+    # Retrieve session from Supabased
     try:
         session_response = supabase_client.table("sessions").select("*").eq("session_id", session_id).execute()
         if not session_response.data or len(session_response.data) == 0:
