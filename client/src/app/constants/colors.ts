@@ -1,5 +1,5 @@
 export const COLORS = {
-    primary: "#0052D4",
+    primary: "#6A1B9A", 
     secondary: "#FFD700",
     gold: "#FFC107",
     white: "#FFFFFF",
@@ -8,12 +8,12 @@ export const COLORS = {
     lightgray: "#F0F4F8",
     container: "#EEF2F7",
     accent: "#1A365D",
-    highlight: "#2196F3",
+    highlight: "#AB47BC", 
     success: "#00C853",
     gradient: {
-        start: "#0052D4",
-        middle: "#4364F7",
-        end: "#6FB1FC"
+        start: "#6A1B9A", 
+        middle: "#8E24AA", 
+        end: "#BA68C8"    
     },
     error: "#FF5252"
 };
