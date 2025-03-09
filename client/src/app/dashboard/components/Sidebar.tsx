@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
 import { NavItem } from './NavItem';
+import { useRouter } from 'next/navigation'; // Changed from next/router to next/navigation
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -14,6 +15,37 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            // Make API call to logout endpoint
+            const response = await fetch('http://localhost:8000/auth/logout', {
+                method: 'POST',
+                credentials: 'include', // Include cookies for session
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                // Clear any client-side auth state if needed
+                localStorage.removeItem('authToken'); // If you're storing tokens
+
+                console.log('Logged out successfully');
+                // Redirect to login page
+                router.push('/login');
+            } else {
+                const errorData = await response.json();
+                console.error('Logout failed:', errorData.detail || 'Unknown error');
+                alert(errorData.detail || 'Logout failed');
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            alert('An error occurred during logout');
+        }
+    };
+
     return (
         <div
             className={`${isCollapsed ? 'w-20' : 'w-64'} h-screen flex-shrink-0 fixed left-0 top-0 transition-all duration-300 z-10`}
@@ -41,19 +73,41 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                 </div>
                 <div className={`px-4 py-4 border-t ${isCollapsed ? 'justify-center' : ''}`} style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
                     {isCollapsed ? (
-                        <Avatar className="w-10 h-10 border-2 border-white">
-                            <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>DA</AvatarFallback>
-                        </Avatar>
+                        <div className="flex flex-col items-center gap-2">
+                            <Avatar className="w-10 h-10 border-2 border-white">
+                                <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
+                                    {user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
+                                </AvatarFallback>
+                            </Avatar>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-white opacity-75 hover:opacity-100"
+                                onClick={handleLogout}
+                                title="Logout"
+                            >
+                                <LogOut className="h-5 w-5" />
+                            </Button>
+                        </div>
                     ) : (
                         <div className="flex items-center gap-3">
                             <Avatar className="w-10 h-10 border-2 border-white">
-                                <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>DA</AvatarFallback>
+                                <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
+                                    {user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
+                                </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                                <p className="text-sm font-medium text-white">{user && 'name' in user ? user.name : "Dummy Admin"}</p>
+                                <p className="text-sm font-medium text-white">
+                                    {user && 'email' in user ? user.email : "No Email Available"}
+                                </p>
                                 <p className="text-xs opacity-75 text-white">Administrator</p>
                             </div>
-                            <Button variant="ghost" size="icon" className="text-white opacity-75 hover:opacity-100">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-white opacity-75 hover:opacity-100"
+                                onClick={handleLogout}
+                            >
                                 <LogOut className="h-5 w-5" />
                             </Button>
                         </div>

@@ -92,15 +92,18 @@ async def register_user(user: UserRegister):
 
 @router.post("/login")
 async def login_user(user: UserLogin, response: Response):
+    logger.debug("Entering login endpoint")  # Add this
     try:
         logger.debug(f"Logging in user: {user.email}")
         db_response = supabase_client.table("users").select("*").eq("email", user.email).execute()
+        logger.debug(f"Database response: {db_response.data}")  # Add this
         
         if not db_response.data or len(db_response.data) == 0:
             logger.warning(f"Login failed: User not found for email {user.email}")
             raise HTTPException(status_code=400, detail="User not found")
 
         db_user = db_response.data[0]
+        logger.debug(f"Found user: {db_user}")  # Add this
         if not verify_password(user.password, db_user["password_hash"]):
             logger.warning(f"Login failed: Incorrect password for {user.email}")
             raise HTTPException(status_code=400, detail="Incorrect password")
@@ -112,6 +115,7 @@ async def login_user(user: UserLogin, response: Response):
             "email": user.email,
             "created_at": datetime.utcnow().isoformat() + "Z",
         }
+        logger.debug(f"Creating session: {session_data}")  # Add this
         supabase_client.table("sessions").insert(session_data).execute()
 
         # Set session cookie in the response
@@ -122,7 +126,6 @@ async def login_user(user: UserLogin, response: Response):
     except Exception as e:
         logger.exception(f"Login error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/profile")
 async def get_user_profile(session: dict = Depends(verify_session)):
     try:

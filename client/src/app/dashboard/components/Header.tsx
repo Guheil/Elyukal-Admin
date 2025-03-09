@@ -39,10 +39,14 @@ export default function Header({ user, notificationsCount }: HeaderProps) {
                 <div className="h-8 w-px bg-gray-200"></div>
                 <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10">
-                        <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>DA</AvatarFallback>
+                        <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
+                            {user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
+                        </AvatarFallback>
                     </Avatar>
                     <div className="hidden md:block">
-                        <p className="text-sm font-medium" style={{ color: COLORS.accent }}>{user && 'name' in user ? user.name : "Dummy Admin"}</p>
+                        <p className="text-sm font-medium" style={{ color: COLORS.accent }}>
+                            {user && 'email' in user ? user.email : "No Email Available"}
+                        </p>
                         <p className="text-xs" style={{ color: COLORS.gray }}>Administrator</p>
                     </div>
                     <ChevronDown size={16} style={{ color: COLORS.gray }} className="hidden md:block" />
