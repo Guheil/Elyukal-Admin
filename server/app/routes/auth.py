@@ -23,8 +23,8 @@ def set_session_cookie(response: Response, session_id: str):
         key=SESSION_COOKIE_NAME,
         value=session_id,
         httponly=True,  # Prevent JavaScript access
-        secure=True,    # Enforce HTTPS (disable in development if needed)
-        samesite="strict",  # Prevent CSRF
+        secure=False,   # Set to False for HTTP in development, True for production HTTPS
+        samesite="lax",  # Use 'lax' for better compatibility in development
         max_age=SESSION_EXPIRY_MINUTES * 60,  # Cookie expiry in seconds
     )
 
@@ -33,16 +33,19 @@ def delete_session_cookie(response: Response):
     response.delete_cookie(
         key=SESSION_COOKIE_NAME,
         httponly=True,
-        secure=True,
-        samesite="strict",
+        secure=False,  # Set to False for HTTP in development, True for production HTTPS
+        samesite="lax",  # Use 'lax' for better compatibility in development
     )
 
 async def verify_session(request: Request) -> dict:
     """Verify the session ID from the cookie and retrieve session data from Supabase."""
+    logger.debug(f"Cookies received: {request.cookies}")
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
     if not session_id:
         logger.warning("No session cookie found")
         raise HTTPException(status_code=403, detail="Invalid session")
+    
+    logger.debug(f"Session ID from cookie: {session_id}")
 
     # Retrieve session from Supabased
     try:
@@ -151,10 +154,20 @@ async def logout(response: Response, session: dict = Depends(verify_session)):
     try:
         session_id = session.get("session_id")
         logger.debug(f"Logging out session: {session_id}")
-        supabase_client.table("sessions").delete().eq("session_id", session_id).execute()
+        
+        # Delete session from database
+        delete_result = supabase_client.table("sessions").delete().eq("session_id", session_id).execute()
+        logger.debug(f"Session deletion result: {delete_result}")
+        
+        # Delete cookie
         delete_session_cookie(response)
         logger.info("Logout successful")
+        
         return {"message": "Logout successful"}
+    except HTTPException as he:
+        # Re-raise HTTP exceptions without modification
+        logger.warning(f"HTTP exception during logout: {str(he)}")
+        raise
     except Exception as e:
         logger.exception(f"Logout error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Logout failed: " + str(e))

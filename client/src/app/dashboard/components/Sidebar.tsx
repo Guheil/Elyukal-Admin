@@ -19,8 +19,11 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
     const handleLogout = async () => {
         try {
-            // Make API call to logout endpoint
-            const response = await fetch('http://localhost:8000/auth/logout', {
+            // Make API call to logout endpoint using the environment variable
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            console.log('Attempting logout with API URL:', apiUrl);
+            
+            const response = await fetch(`${apiUrl}/auth/logout`, {
                 method: 'POST',
                 credentials: 'include', // Include cookies for session
                 headers: {
@@ -28,21 +31,34 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                 },
             });
 
+            console.log('Logout response status:', response.status);
+            
+            // Always clear local storage regardless of response
+            localStorage.removeItem('access_token');
+            
             if (response.ok) {
-                // Clear any client-side auth state if needed
-                localStorage.removeItem('authToken'); // If you're storing tokens
-
                 console.log('Logged out successfully');
                 // Redirect to login page
                 router.push('/login');
             } else {
-                const errorData = await response.json();
-                console.error('Logout failed:', errorData.detail || 'Unknown error');
-                alert(errorData.detail || 'Logout failed');
+                // Try to parse error response
+                let errorMessage = 'Logout failed';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.detail || 'Unknown error';
+                } catch (parseError) {
+                    console.error('Error parsing response:', parseError);
+                }
+                
+                console.error('Logout failed:', errorMessage);
+                // Still redirect to login page even if server-side logout fails
+                router.push('/login');
             }
         } catch (error) {
             console.error('Logout error:', error);
-            alert('An error occurred during logout');
+            // Still clear local storage and redirect on error
+            localStorage.removeItem('access_token');
+            router.push('/login');
         }
     };
 
