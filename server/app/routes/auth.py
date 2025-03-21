@@ -59,7 +59,9 @@ async def verify_session(request: Request) -> dict:
         # Check session expiry
         created_at = datetime.fromisoformat(session["created_at"].replace("Z", "+00:00"))
         expiry_time = created_at + timedelta(minutes=SESSION_EXPIRY_MINUTES)
-        if datetime.utcnow() > expiry_time:
+        # Convert utcnow to an offset-aware datetime to match expiry_time
+        current_time = datetime.utcnow().replace(tzinfo=created_at.tzinfo)
+        if current_time > expiry_time:
             logger.info(f"Session expired for session_id: {session_id}")
             supabase_client.table("sessions").delete().eq("session_id", session_id).execute()
             raise HTTPException(status_code=403, detail="Session expired")

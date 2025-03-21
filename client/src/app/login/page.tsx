@@ -8,7 +8,8 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import {
     Eye, EyeOff, MapPin, ShoppingBag, ShieldCheck, Mail, Lock,
-    ChevronRight, CheckCircle2, Activity, Settings, DollarSign, Users
+    ChevronRight, CheckCircle2, Activity, Settings, DollarSign, Users,
+    AlertTriangle
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,11 +80,33 @@ export default function AdminLoginPage() {
         } catch (error: any) {
             console.error('Login error:', error);
             let errorMessage = 'Authentication failed. Please verify your credentials.';
+            
+            // Extract specific error message from response if available
             if (error.response?.data?.detail) {
                 errorMessage = error.response.data.detail;
+                
+                // Set form error for password field if it's an authentication error
+                if (errorMessage.includes('credentials') || 
+                    errorMessage.includes('password') || 
+                    errorMessage.includes('authentication')) {
+                    form.setError('password', {
+                        type: 'manual',
+                        message: 'Incorrect password. Please try again.'
+                    });
+                }
+                
+                // Set form error for email if it's an email-related error
+                if (errorMessage.includes('email') || errorMessage.includes('user not found')) {
+                    form.setError('email', {
+                        type: 'manual',
+                        message: 'Email not recognized. Please check and try again.'
+                    });
+                }
             } else if (error.message) {
                 errorMessage = error.message;
             }
+            
+            // Show toast notification with error message
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
@@ -253,7 +276,7 @@ export default function AdminLoginPage() {
                                                             className="pl-12 py-6 rounded-lg text-base border-2 transition-all focus:border-primary"
                                                             style={{
                                                                 backgroundColor: COLORS.lightgray,
-                                                                borderColor: 'transparent',
+                                                                borderColor: form.formState.errors.email ? COLORS.error : 'transparent',
                                                                 color: COLORS.accent,
                                                                 fontFamily: FONTS.regular,
                                                             }}
@@ -261,7 +284,11 @@ export default function AdminLoginPage() {
                                                         />
                                                     </div>
                                                 </FormControl>
-                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: COLORS.error, fontFamily: FONTS.regular }} />
+                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: COLORS.error, fontFamily: FONTS.regular }}>
+                                                    {form.formState.errors.password && (
+                                                        <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" style={{ color: COLORS.error }} />
+                                                    )}
+                                                </FormMessage>
                                             </FormItem>
                                         )}
                                     />
@@ -293,7 +320,7 @@ export default function AdminLoginPage() {
                                                             className="pl-12 pr-12 py-6 rounded-lg text-base border-2 transition-all focus:border-primary"
                                                             style={{
                                                                 backgroundColor: COLORS.lightgray,
-                                                                borderColor: 'transparent',
+                                                                borderColor: form.formState.errors.password ? COLORS.error : 'transparent',
                                                                 color: COLORS.accent,
                                                                 fontFamily: FONTS.regular,
                                                             }}
@@ -311,7 +338,11 @@ export default function AdminLoginPage() {
                                                         </Button>
                                                     </div>
                                                 </FormControl>
-                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: COLORS.error, fontFamily: FONTS.regular }} />
+                                                <FormMessage className="text-sm mt-1 flex items-center gap-1" style={{ color: COLORS.error, fontFamily: FONTS.regular }}>
+                                                    {form.formState.errors.password && (
+                                                        <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" style={{ color: COLORS.error }} />
+                                                    )}
+                                                </FormMessage>
                                             </FormItem>
                                         )}
                                     />

@@ -3,8 +3,12 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 
 interface User {
     email: string;
-    first_name: string;
-    last_name: string;
+    first_name?: string;
+    last_name?: string;
+    app_metadata?: Record<string, any>;
+    user_metadata?: Record<string, any>;
+    aud?: string;
+    created_at?: string;
 }
 
 interface AuthContextType {
