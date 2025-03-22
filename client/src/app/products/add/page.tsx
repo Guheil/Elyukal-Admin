@@ -372,7 +372,7 @@ export default function AddProductPage() {
                                                         <Upload className="w-8 h-8 mb-2" style={{ color: COLORS.primary }} />
                                                         <p className="text-xs text-center" style={{ color: COLORS.gray }}>Upload 3D Model</p>
                                                     </div>
-                                                    <input type="file" accept=".glb,.gltf,.usdz" className="hidden" onChange={handleArAssetUpload} />
+                                                    <input type="file" accept=".glb" className="hidden" onChange={handleArAssetUpload} />
                                                 </label>
 
                                                 {/* AR Asset Preview */}
@@ -390,7 +390,7 @@ export default function AddProductPage() {
                                                 )}
                                             </div>
                                             <p className="text-xs" style={{ color: COLORS.gray }}>
-                                                Upload a 3D model to enable AR viewing. Supported formats: GLB, GLTF, USDZ
+                                                Upload a 3D model to enable AR viewing. Supported formats: GLB only
                                             </p>
                                         </div>
 
