@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import StatsSection from './components/StatsSection';
@@ -10,31 +10,45 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
+import { fetchDashboardStats } from '../api/dashboardService';
 
 export default function Dashboard() {
     const { user } = useAuth();
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-    const analyticsData = {
-        totalProducts: 283,
-        pendingApproval: 17,
-        // salesThisMonth: 158900, // Removed since no transactions
-        visitors: 12483,
-        activeLocations: 32,
-        productViews: 46729,
-        orderConversionRate: 3.2, // Could be renamed to interestRate if preferred
+    const [analyticsData, setAnalyticsData] = useState({
+        totalProducts: 0,
+        totalCategories: 0,
+        activeLocations: 0,
+        totalReviews: 0,
+        averageRating: 0,
         topProducts: [
-            { id: 1, name: "Virginia Tobacco", sales: 520, growth: 9.8, category: "Agriculture" }, // 'sales' as views
+            { id: 1, name: "Virginia Tobacco", sales: 520, growth: 9.8, category: "Agriculture" },
             // ... other products
         ],
-        recentOrders: [ // Now recent updates
+        recentOrders: [
             { id: "ORD-7301", product: "Inabel Fabric Set", customer: "Ana Mercado", date: "Mar 8, 2025", status: "Completed" },
             // ... other updates
         ],
         notifications: [
             // ... unchanged
         ],
-    };
+    });
+    
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const stats = await fetchDashboardStats();
+                setAnalyticsData(prevData => ({
+                    ...prevData,
+                    ...stats
+                }));
+            } catch (error) {
+                console.error('Error fetching dashboard stats:', error);
+            }
+        };
+        
+        fetchStats();
+    }, []);
 
     return (
         <div className="min-h-screen flex  bg-container" style={{ backgroundColor: COLORS.container }}>

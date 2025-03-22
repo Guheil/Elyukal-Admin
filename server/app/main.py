@@ -1,7 +1,8 @@
 # app/main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth
+from app.routes import auth, dashboard, reviews, fetch_products
+from app.auth.auth_handler import get_current_user
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -22,3 +23,6 @@ def read_root():
     return {"message": "Elyukal Admin API running!"}
 
 app.include_router(auth.router)
+app.include_router(dashboard.router)
+app.include_router(reviews.router)
+app.include_router(fetch_products.router)

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BASE_URL } from '@/config';
 import { PerformanceMetric } from './PerformanceMetric';
 import { COLORS } from '../../constants/colors';
 import { Eye, ShoppingCart, Users, TrendingUp, CheckCircle2, AlertTriangle, Activity, Package } from 'lucide-react';
@@ -11,6 +12,23 @@ interface OverviewTabProps {
 }
 
 export default function OverviewTab({ analyticsData }: OverviewTabProps) {
+    const [totalProducts, setTotalProducts] = useState<number>(0);
+
+    useEffect(() => {
+        // Fetch total number of products on component mount
+        const fetchTotalProducts = async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/get_total_number_of_products`);
+                const data = await response.json();
+                setTotalProducts(data.total_products);
+            } catch (error) {
+                console.error('Error fetching total products:', error);
+            }
+        };
+
+        fetchTotalProducts();
+    }, []);
+
     const getGrowthClass = (growth: number) =>
         growth >= 0 ? "text-success flex items-center gap-1" : "text-error flex items-center gap-1";
 
@@ -87,21 +105,28 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                             <PerformanceMetric
                                 icon={<Eye size={18} style={{ color: COLORS.primary }} />}
                                 label="Product Views"
-                                value={analyticsData.productViews.toLocaleString()}
+                                value={(analyticsData.productViews?.toLocaleString() || '0')}
                                 change={8.2}
                                 color={COLORS.primary}
                             />
                             <PerformanceMetric
                                 icon={<ShoppingCart size={18} style={{ color: COLORS.success }} />}
                                 label="Interest Rate"
-                                value={`${analyticsData.orderConversionRate}%`}
+                                value={`${analyticsData.orderConversionRate || 0}%`}
                                 change={1.5}
                                 color={COLORS.success}
                             />
                             <PerformanceMetric
                                 icon={<Package size={18} style={{ color: COLORS.gold }} />}
+                                label="Total Products"
+                                value={totalProducts.toLocaleString()}
+                                change={0}
+                                color={COLORS.gold}
+                            />
+                            <PerformanceMetric
+                                icon={<Package size={18} style={{ color: COLORS.gold }} />}
                                 label="Stock Availability"
-                                value={`${Math.round((analyticsData.totalProducts - analyticsData.pendingApproval) / analyticsData.totalProducts * 100)}%`}
+                                value={`${Math.round(((totalProducts || 0) - (analyticsData.pendingApproval || 0)) / (totalProducts || 1) * 100)}%`}
                                 change={3.7}
                                 color={COLORS.gold}
                             />
@@ -181,7 +206,7 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                                 className="rounded-full px-2 py-1"
                                 style={{ backgroundColor: COLORS.primary, color: COLORS.white }}
                             >
-                                {analyticsData.notifications.length} New
+                                {analyticsData.notifications?.length || 0} New
                             </Badge>
                         </div>
                         <CardDescription>Recent system notifications</CardDescription>
