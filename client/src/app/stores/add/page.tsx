@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Upload, ArrowLeft, MapPin } from 'lucide-react';
+import MapPreview from '../components/MapPreview';
 
 import Sidebar from '../../dashboard/components/Sidebar';
 import Header from '../../dashboard/components/Header';
@@ -305,16 +306,16 @@ export default function AddStorePage() {
                       </p>
                     </div>
 
-                    {/* Location Map Preview (placeholder) */}
+                    {/* Location Map Preview */}
                     <div className="space-y-3">
                       <Label style={{ color: COLORS.gray }}>Location Preview</Label>
-                      <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center border" style={{ borderColor: COLORS.lightgray }}>
-                        <div className="flex flex-col items-center text-gray-400">
-                          <MapPin size={24} />
-                          <p className="text-sm mt-2">Map preview will be shown here</p>
-                          <p className="text-xs">Based on provided latitude and longitude</p>
-                        </div>
-                      </div>
+                      <MapPreview 
+                        latitude={parseFloat(form.watch('latitude') as unknown as string) || 16.6157} 
+                        longitude={parseFloat(form.watch('longitude') as unknown as string) || 120.3210} 
+                      />
+                      <p className="text-xs" style={{ color: COLORS.gray }}>
+                        Map updates automatically as you change latitude and longitude values
+                      </p>
                     </div>
 
                     {/* Submit Button */}

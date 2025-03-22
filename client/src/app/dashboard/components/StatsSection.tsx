@@ -12,20 +12,39 @@ interface StatsSectionProps {
 
 export default function StatsSection({ analyticsData }: StatsSectionProps) {
     const [totalProducts, setTotalProducts] = useState<number>(0);
+    const [totalCategories, setTotalCategories] = useState<number>(0);
+    const [totalStores, setTotalStores] = useState<number>(0);
+    const [totalReviews, setTotalReviews] = useState<number>(0);
     
     useEffect(() => {
-        // Fetch total number of products on component mount
-        const fetchTotalProducts = async () => {
+        // Fetch all stats on component mount
+        const fetchStats = async () => {
             try {
-                const response = await fetch(`${BASE_URL}/get_total_number_of_products`);
-                const data = await response.json();
-                setTotalProducts(data.total_products);
+                // Fetch total products
+                const productsResponse = await fetch(`${BASE_URL}/get_total_number_of_products`);
+                const productsData = await productsResponse.json();
+                setTotalProducts(productsData.total_products);
+                
+                // Fetch total categories
+                const categoriesResponse = await fetch(`${BASE_URL}/get_total_number_of_categories`);
+                const categoriesData = await categoriesResponse.json();
+                setTotalCategories(categoriesData.total_categories);
+                
+                // Fetch total stores (active locations)
+                const storesResponse = await fetch(`${BASE_URL}/get_total_number_of_stores`);
+                const storesData = await storesResponse.json();
+                setTotalStores(storesData.total_stores);
+                
+                // Fetch total reviews
+                const reviewsResponse = await fetch(`${BASE_URL}/get_total_number_of_reviews`);
+                const reviewsData = await reviewsResponse.json();
+                setTotalReviews(reviewsData.total_reviews);
             } catch (error) {
-                console.error('Error fetching total products:', error);
+                console.error('Error fetching stats:', error);
             }
         };
 
-        fetchTotalProducts();
+        fetchStats();
     }, []);
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -38,21 +57,21 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
             />
             <StatsCard
                 title="Product Categories"
-                value={analyticsData.totalCategories.toString()}
+                value={totalCategories.toLocaleString()}
                 description="Diverse product offerings"
                 icon={<Tag />}
                 color={COLORS.success}
             />
             <StatsCard
                 title="Active Locations"
-                value={analyticsData.activeLocations.toString()}
+                value={totalStores.toLocaleString()}
                 description="Across La Union province"
                 icon={<MapPin />}
                 color={COLORS.gold}
             />
             <StatsCard
                 title="Product Reviews"
-                value={analyticsData.totalReviews.toString()}
+                value={totalReviews.toLocaleString()}
                 description={`${analyticsData.averageRating} average rating`}
                 icon={<Star />}
                 color={COLORS.gradient.middle}

@@ -1,7 +1,7 @@
 # app/main.py
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, dashboard, reviews, fetch_products, fetch_stores
+from app.routes import auth, dashboard, reviews, fetch_products, fetch_stores, dashboard_stats
 from app.auth.auth_handler import get_current_user
 import logging
 
@@ -27,3 +27,4 @@ app.include_router(dashboard.router)
 app.include_router(reviews.router)
 app.include_router(fetch_products.router)
 app.include_router(fetch_stores.router)
+app.include_router(dashboard_stats.router)
