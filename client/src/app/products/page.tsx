@@ -182,6 +182,7 @@ export default function ProductsPage() {
                                     color: 'white',
                                     fontWeight: 'bold'
                                 }}
+                                onClick={() => router.push('/products/add')}
                             >
                                 <Plus size={18} />
                                 Add New Product
@@ -256,91 +257,92 @@ export default function ProductsPage() {
                                 <p style={{ color: COLORS.gray }}>No products found matching your criteria.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {currentProducts.map(product => (
-                                    <Card key={product.id} className="flex flex-col h-full border-none shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-                                        <div className="relative h-56 flex items-center justify-center overflow-hidden group">
-                                            {product.image_urls && product.image_urls.length > 0 ? (
-                                                <img
-                                                    src={product.image_urls[0]}
-                                                    alt={product.name}
-                                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                />
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center text-gray-400 h-full w-full bg-gray-100">
-                                                    <Image size={48} />
-                                                    <p className="text-sm mt-2">No image available</p>
-                                                </div>
-                                            )}
-                                            <div
-                                                className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                            ></div>
-                                            <Badge
-                                                className="absolute top-3 right-3 py-1 px-3 text-xs font-semibold shadow-md"
-                                                style={{
-                                                    backgroundColor: product.in_stock ? COLORS.success : COLORS.error,
-                                                    color: 'white'
-                                                }}
-                                            >
-                                                {product.in_stock ? 'In Stock' : 'Out of Stock'}
-                                            </Badge>
-                                            <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                                <div className="flex justify-between gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleEdit(product.id)}
-                                                        className="flex-1 flex items-center justify-center gap-1 bg-white/90 backdrop-blur-sm hover:bg-white"
-                                                        style={{ borderColor: 'transparent', color: COLORS.primary }}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {currentProducts.map(product => (
+                                            <Card key={product.id} className="flex flex-col h-full border-none shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                                                <div className="relative w-full h-60 overflow-hidden group"> {/* Adjusted height */}
+                                                    {product.image_urls && product.image_urls.length > 0 ? (
+                                                        <img
+                                                            src={product.image_urls[0]}
+                                                            alt={product.name}
+                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center text-gray-400 w-full h-full bg-gray-100">
+                                                            <Image size={48} />
+                                                            <p className="text-sm mt-2">No image available</p>
+                                                        </div>
+                                                    )}
+                                                    <div
+                                                        className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                                    ></div>
+                                                    <Badge
+                                                        className="absolute top-3 right-3 py-1 px-3 text-xs font-semibold shadow-md"
+                                                        style={{
+                                                            backgroundColor: product.in_stock ? COLORS.success : COLORS.error,
+                                                            color: 'white'
+                                                        }}
                                                     >
-                                                        <Edit size={14} />
-                                                        Edit
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDelete(product.id)}
-                                                        className="flex-1 flex items-center justify-center gap-1 bg-white/90 backdrop-blur-sm hover:bg-white"
-                                                        style={{ borderColor: 'transparent', color: COLORS.error }}
-                                                    >
-                                                        <Trash2 size={14} />
-                                                        Delete
-                                                    </Button>
+                                                        {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                                                    </Badge>
+                                                    <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                                        <div className="flex justify-between gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleEdit(product.id)}
+                                                                className="flex-1 flex items-center justify-center gap-1 bg-white/90 backdrop-blur-sm hover:bg-white"
+                                                                style={{ borderColor: 'transparent', color: COLORS.primary }}
+                                                            >
+                                                                <Edit size={14} />
+                                                                Edit
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleDelete(product.id)}
+                                                                className="flex-1 flex items-center justify-center gap-1 bg-white/90 backdrop-blur-sm hover:bg-white"
+                                                                style={{ borderColor: 'transparent', color: COLORS.error }}
+                                                            >
+                                                                <Trash2 size={14} />
+                                                                Delete
+                                                            </Button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <CardContent className="p-5 flex-grow">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="font-semibold truncate text-lg" style={{ color: COLORS.accent }}>{product.name}</h3>
-                                                <div className="flex items-center bg-gray-50 px-2 py-1 rounded-md" style={{ backgroundColor: COLORS.lightgray }}>
-                                                    <Star size={14} fill={COLORS.gold} stroke={COLORS.gold} />
-                                                    <span className="text-sm ml-1 font-medium">{product.average_rating}</span>
-                                                </div>
-                                            </div>
-                                            <Badge variant="outline" className="mb-3 px-3 py-1 font-normal text-xs rounded-full" style={{ borderColor: COLORS.highlight, color: COLORS.highlight, backgroundColor: `${COLORS.highlight}10` }}>
-                                                {product.category}
-                                            </Badge>
-                                            <p className="text-sm mb-3 line-clamp-2" style={{ color: COLORS.gray }}>
-                                                {product.description}
-                                            </p>
-                                            <div className="flex justify-between items-end mt-2">
-                                                <div>
-                                                    <p className="text-xs" style={{ color: COLORS.gray }}>Price Range</p>
-                                                    <p className="font-semibold text-lg" style={{ color: COLORS.primary }}>
-                                                        ₱{product.price_min.toLocaleString()} - ₱{product.price_max.toLocaleString()}
+                                                <CardContent className="p-5 flex-grow">
+                                                    {/* Rest of the CardContent remains unchanged */}
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h3 className="font-semibold truncate text-lg" style={{ color: COLORS.accent }}>{product.name}</h3>
+                                                        <div className="flex items-center bg-gray-50 px-2 py-1 rounded-md" style={{ backgroundColor: COLORS.lightgray }}>
+                                                            <Star size={14} fill={COLORS.gold} stroke={COLORS.gold} />
+                                                            <span className="text-sm ml-1 font-medium">{product.average_rating}</span>
+                                                        </div>
+                                                    </div>
+                                                    <Badge variant="outline" className="mb-3 px-3 py-1 font-normal text-xs rounded-full" style={{ borderColor: COLORS.highlight, color: COLORS.highlight, backgroundColor: `${COLORS.highlight}10` }}>
+                                                        {product.category}
+                                                    </Badge>
+                                                    <p className="text-sm mb-3 line-clamp-2" style={{ color: COLORS.gray }}>
+                                                        {product.description}
                                                     </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-xs" style={{ color: COLORS.gray }}>Store</p>
-                                                    <p className="text-sm font-medium" style={{ color: COLORS.accent }}>
-                                                        {product.stores.name}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
+                                                    <div className="flex justify-between items-end mt-2">
+                                                        <div>
+                                                            <p className="text-xs" style={{ color: COLORS.gray }}>Price Range</p>
+                                                            <p className="font-semibold text-lg" style={{ color: COLORS.primary }}>
+                                                                ₱{product.price_min.toLocaleString()} - ₱{product.price_max.toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-xs" style={{ color: COLORS.gray }}>Store</p>
+                                                            <p className="text-sm font-medium" style={{ color: COLORS.accent }}>
+                                                                {product.stores.name}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
                         )}
 
                         {/* Pagination */}
