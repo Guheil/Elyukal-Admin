@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
-import { NavItem } from './NavItem';
+import NavItem from './NavItem';
 import { useRouter } from 'next/navigation'; // Changed from next/router to next/navigation
 
 interface SidebarProps {
@@ -82,8 +82,12 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                 </div>
                 <div className="flex-1 overflow-y-auto py-6 px-4">
                     <nav className="space-y-1">
-                        <NavItem icon={<LayoutDashboard />} label="Dashboard" isActive={true} isCollapsed={isCollapsed} />
-                        <NavItem icon={<Package />} label="Products" isActive={false} isCollapsed={isCollapsed} />
+                        <Link href="/dashboard">
+                            <NavItem icon={<LayoutDashboard />} label="Dashboard" isActive={false} isCollapsed={isCollapsed} />
+                        </Link>
+                        <Link href="/products">
+                            <NavItem icon={<Package />} label="Products" isActive={false} isCollapsed={isCollapsed} />
+                        </Link>
                         {/* Other nav items */}
                     </nav>
                 </div>
