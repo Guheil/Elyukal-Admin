@@ -31,24 +31,21 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
     useEffect(() => {
         const checkUser = async () => {
-            const token = localStorage.getItem("access_token");
-            if (token) {
-                try {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        setUser(data.profile);
-                    } else {
-                        localStorage.removeItem("access_token");
-                    }
-                } catch (error) {
-                    console.error("Profile fetch error:", error);
-                    localStorage.removeItem("access_token");
+            try {
+                // Use credentials to include cookies in the request
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+                    credentials: "include",
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setUser(data.profile);
                 }
+            } catch (error) {
+                console.error("Profile fetch error:", error);
+                // No need to remove access_token as we're using cookies now
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         checkUser();
     }, []);
@@ -59,23 +56,48 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
+                credentials: "include", // Include cookies in the request
             });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || "Login failed");
             }
-            const data = await response.json();
-            localStorage.setItem("access_token", data.access_token);
-            setUser(data.user);
+            // The server doesn't return user data or access token
+            // It uses HTTP-only cookies for session management instead
+            // We don't need to store anything in localStorage
+            
+            // Fetch user profile after successful login
+            try {
+                const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+                    credentials: "include", // Include cookies in the request
+                });
+                if (profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    setUser(profileData.profile);
+                }
+            } catch (profileError) {
+                console.error("Profile fetch error after login:", profileError);
+                // Continue even if profile fetch fails
+            }
         } catch (error) {
             console.error("Login error:", error);
             throw error;
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem("access_token");
-        setUser(null);
+    const logout = async () => {
+        try {
+            // Call the logout endpoint to clear the session cookie
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+                method: "GET",
+                credentials: "include",
+            });
+        } catch (error) {
+            console.error("Logout error:", error);
+        } finally {
+            // Clear user state regardless of server response
+            setUser(null);
+        }
     };
 
     return (

@@ -75,14 +75,14 @@ async def verify_session(request: Request) -> dict:
 async def register_user(user: UserRegister):
     try:
         logger.debug(f"Registering user: {user.email}")
-        existing_user = supabase_client.table("users").select("*").eq("email", user.email).execute()
+        existing_user = supabase_client.table("admin_user").select("*").eq("email", user.email).execute()
         if existing_user.data and len(existing_user.data) > 0:
             logger.warning(f"User already exists: {user.email}")
             raise HTTPException(status_code=400, detail="User already exists")
 
         hashed_password = hash_password(user.password)
         
-        response = supabase_client.table("users").insert({
+        response = supabase_client.table("admin_user").insert({
             "email": user.email,
             "password_hash": hashed_password,
             "first_name": user.first_name,
@@ -100,7 +100,7 @@ async def login_user(user: UserLogin, response: Response):
     logger.debug("Entering login endpoint")  # Add this
     try:
         logger.debug(f"Logging in user: {user.email}")
-        db_response = supabase_client.table("users").select("*").eq("email", user.email).execute()
+        db_response = supabase_client.table("admin_user").select("*").eq("email", user.email).execute()
         logger.debug(f"Database response: {db_response.data}")  # Add this
         
         if not db_response.data or len(db_response.data) == 0:
@@ -139,7 +139,7 @@ async def get_user_profile(session: dict = Depends(verify_session)):
             logger.warning("Invalid session: No email found")
             raise HTTPException(status_code=403, detail="Invalid session")
 
-        response = supabase_client.table("users").select("email", "first_name", "last_name").eq("email", user_email).execute()
+        response = supabase_client.table("admin_user").select("email", "first_name", "last_name").eq("email", user_email).execute()
         
         if not response.data or len(response.data) == 0:
             logger.warning(f"User not found: {user_email}")

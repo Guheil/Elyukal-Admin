@@ -30,7 +30,7 @@ const formSchema = z.object({
 
 export default function AdminLoginPage() {
     const router = useRouter();
-    const { setUser } = useAuth();
+    const { setUser, login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [animateBackground, setAnimateBackground] = useState(false);
@@ -50,45 +50,25 @@ export default function AdminLoginPage() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsLoading(true);
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const response = await axios.post(
-                `${baseUrl}/auth/login`,
-                { email: values.email, password: values.password },
-                {
-                    withCredentials: true, // Required for session cookies
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            // Validate response
-            if (response.status === 200) {
-                // Update user context (minimal data, as session is managed by backend)
-                setUser({
-                    email: values.email,
-                    app_metadata: {},
-                    user_metadata: {},
-                    aud: "authenticated",
-                    created_at: new Date().toISOString(),
-                });
-                toast.success('Login successful!');
-                router.push('/dashboard');
-            } else {
-                throw new Error('Invalid response from server');
-            }
+            // Use the login function from AuthContext instead of making a direct API call
+            // This ensures consistency in how authentication is handled
+            await login(values.email, values.password);
+            
+            toast.success('Login successful!');
+            router.push('/dashboard');
         } catch (error: any) {
             console.error('Login error:', error);
             let errorMessage = 'Authentication failed. Please verify your credentials.';
             
-            // Extract specific error message from response if available
-            if (error.response?.data?.detail) {
-                errorMessage = error.response.data.detail;
+            // Extract error message from the error object
+            if (error.message) {
+                errorMessage = error.message;
                 
                 // Set form error for password field if it's an authentication error
                 if (errorMessage.includes('credentials') || 
                     errorMessage.includes('password') || 
-                    errorMessage.includes('authentication')) {
+                    errorMessage.includes('authentication') ||
+                    errorMessage.includes('Incorrect password')) {
                     form.setError('password', {
                         type: 'manual',
                         message: 'Incorrect password. Please try again.'
@@ -96,14 +76,12 @@ export default function AdminLoginPage() {
                 }
                 
                 // Set form error for email if it's an email-related error
-                if (errorMessage.includes('email') || errorMessage.includes('user not found')) {
+                if (errorMessage.includes('email') || errorMessage.includes('user not found') || errorMessage.includes('User not found')) {
                     form.setError('email', {
                         type: 'manual',
                         message: 'Email not recognized. Please check and try again.'
                     });
                 }
-            } else if (error.message) {
-                errorMessage = error.message;
             }
             
             // Show toast notification with error message
