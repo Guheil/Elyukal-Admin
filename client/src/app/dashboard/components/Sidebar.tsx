@@ -92,7 +92,8 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                         <div className="flex flex-col items-center gap-2">
                             <Avatar className="w-10 h-10 border-2 border-white">
                                 <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
-                                    {user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
+                                    {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 
+                                     user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
                                 </AvatarFallback>
                             </Avatar>
                             <Button
@@ -109,12 +110,15 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                         <div className="flex items-center gap-3">
                             <Avatar className="w-10 h-10 border-2 border-white">
                                 <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
-                                    {user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
+                                    {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 
+                                     user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-white">
-                                    {user && 'email' in user ? user.email : "No Email Available"}
+                            <div className="flex-1 min-w-0 mr-2">
+                                <p className="text-sm font-medium text-white truncate">
+                                    {user && 'first_name' in user && 'last_name' in user ? 
+                                        `${user.first_name} ${user.last_name}` : 
+                                        user && 'email' in user ? user.email : "No Name Available"}
                                 </p>
                                 <p className="text-xs opacity-75 text-white">Administrator</p>
                             </div>
