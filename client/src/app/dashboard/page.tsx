@@ -68,8 +68,7 @@ export default function Dashboard() {
                             <TabsList className="mb-6">
                                 <TabsTrigger value="overview">Overview</TabsTrigger>
                                 <TabsTrigger value="products">Products</TabsTrigger>
-                                <TabsTrigger value="orders">Orders</TabsTrigger>
-                                <TabsTrigger value="customers">Customers</TabsTrigger>
+                                <TabsTrigger value="stores">Stores</TabsTrigger>
                             </TabsList>
                             <TabsContent value="overview">
                                 <OverviewTab analyticsData={analyticsData} />
@@ -82,6 +81,42 @@ export default function Dashboard() {
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-sm text-gray-500">This tab will contain product management features...</p>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="stores">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Stores Management</CardTitle>
+                                        <CardDescription>Manage your store locations and inventory</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm text-gray-500">This tab will contain store management features...</p>
+
+                                        <div className="mt-4">
+                                            <h3 className="text-sm font-medium mb-2">Store Statistics</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                                <Card className="p-4">
+                                                    <h4 className="text-sm font-medium mb-1">Stores with Most Products</h4>
+                                                    <div className="py-6 border border-dashed rounded-md bg-slate-50 text-center">
+                                                        <p className="text-sm text-gray-500">No data available</p>
+                                                    </div>
+                                                </Card>
+                                                <Card className="p-4">
+                                                    <h4 className="text-sm font-medium mb-1">Top Performing Stores</h4>
+                                                    <div className="py-6 border border-dashed rounded-md bg-slate-50 text-center">
+                                                        <p className="text-sm text-gray-500">No data available</p>
+                                                    </div>
+                                                </Card>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4">
+                                            <h3 className="text-sm font-medium mb-2">All Stores</h3>
+                                            <div className="py-8 border border-dashed rounded-md bg-slate-50 text-center">
+                                                <p className="text-sm text-gray-500">No store data available</p>
+                                            </div>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </TabsContent>

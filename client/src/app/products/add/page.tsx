@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Upload, ArrowLeft } from 'lucide-react';
+import { fetchStores, Store } from '../../api/storeService';
 
 import Sidebar from '../../dashboard/components/Sidebar';
 import Header from '../../dashboard/components/Header';
@@ -36,7 +37,7 @@ const productFormSchema = z.object({
   price_max: z.coerce.number().min(0, { message: 'Maximum price cannot be negative' }),
   address: z.string().min(5, { message: 'Address must be at least 5 characters' }),
   in_stock: z.boolean().default(true),
-  store_id: z.coerce.number().int().positive({ message: 'Please select a valid store' }),
+  store_id: z.string().min(1, { message: 'Please select a valid store' }),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -50,12 +51,9 @@ export default function AddProductPage() {
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [arAssetFile, setArAssetFile] = useState<File | null>(null);
   
-  // Sample store data (would come from API in a real implementation)
-  const stores = [
-    { id: 1, name: 'La Union Marketplace' },
-    { id: 2, name: 'Agri-Tourism Center' },
-    { id: 3, name: 'Local Crafts Shop' },
-  ];
+  // Store data from API
+  const [stores, setStores] = useState<Store[]>([]);
+  const [loadingStores, setLoadingStores] = useState(true);
 
   // Sample categories (would come from API in a real implementation)
   const categories = [
@@ -79,7 +77,7 @@ export default function AddProductPage() {
       price_max: 0,
       address: '',
       in_stock: true,
-      store_id: 0,
+      store_id: '',
     },
   });
 
@@ -99,6 +97,25 @@ export default function AddProductPage() {
       setArAssetFile(e.target.files[0]);
     }
   };
+
+  // Fetch stores data when component mounts
+  useEffect(() => {
+    const loadStores = async () => {
+      setLoadingStores(true);
+      try {
+        const storesData = await fetchStores();
+        if (storesData && Array.isArray(storesData)) {
+          setStores(storesData);
+        }
+      } catch (error) {
+        console.error('Error loading stores:', error);
+      } finally {
+        setLoadingStores(false);
+      }
+    };
+
+    loadStores();
+  }, []);
 
   const removeImage = (index: number) => {
     const newFiles = [...imageFiles];
@@ -251,12 +268,13 @@ export default function AddProductPage() {
                               <select
                                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                 {...field}
-                                value={field.value.toString()}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                disabled={loadingStores}
                               >
-                                <option value="0">Select a store</option>
+                                <option value="">{loadingStores ? 'Loading stores...' : 'Select a store'}</option>
                                 {stores.map((store) => (
-                                  <option key={store.id} value={store.id}>
+                                  <option key={store.store_id} value={store.store_id}>
                                     {store.name}
                                   </option>
                                 ))}
