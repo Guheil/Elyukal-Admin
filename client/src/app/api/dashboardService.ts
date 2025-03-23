@@ -14,9 +14,9 @@ export const fetchDashboardStats = async () => {
             },
         });
 
-        if (!response.ok) {
-            throw new Error(`Error fetching dashboard stats: ${response.status}`);
-        }
+        // if (!response.ok) {
+        //     throw new Error(`Error fetching dashboard stats: ${response.status}`);
+        // }
 
         return await response.json();
     } catch (error) {
