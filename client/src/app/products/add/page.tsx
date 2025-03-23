@@ -135,17 +135,37 @@ export default function AddProductPage() {
     setIsSubmitting(true);
     
     try {
-      // In a real implementation, we would upload images and AR asset to storage
-      // and then send the product data with URLs to the backend
-      console.log('Form data:', data);
-      console.log('Image files:', imageFiles);
-      console.log('AR asset file:', arAssetFile);
+      // Create FormData object to send files and form data
+      const formData = new FormData();
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Add all form fields
+      Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value.toString());
+      });
+      
+      // Add location data (these would come from a map component in a real implementation)
+      formData.append('location_name', data.address); // Using address as location name for now
+      formData.append('latitude', '0'); // Placeholder
+      formData.append('longitude', '0'); // Placeholder
+      
+      // Add all image files
+      imageFiles.forEach(file => {
+        formData.append('images', file);
+      });
+      
+      // Add AR asset if available
+      if (arAssetFile) {
+        formData.append('ar_asset', arAssetFile);
+      }
+      
+      // Import the addProduct function
+      const { addProduct } = await import('../../api/productService');
+      
+      // Send the data to the backend
+      const response = await addProduct(formData);
       
       // Show success message
-      alert('Product added successfully! (Frontend only)');
+      alert('Product added successfully!');
       
       // Redirect to products page
       router.push('/products');

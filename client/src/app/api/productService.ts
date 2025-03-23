@@ -1,7 +1,7 @@
 // src/app/api/productService.ts
 
 /**
- * Service for fetching product data from the API
+ * Service for fetching and managing product data from the API
  */
 
 export interface Product {
@@ -77,6 +77,30 @@ export const fetchProductsByMunicipality = async (municipalityId: string) => {
     } catch (error) {
         console.error('Products by municipality fetch error:', error);
         return { products: [] };
+    }
+};
+
+/**
+ * Add a new product with images and optional AR asset
+ */
+export const addProduct = async (formData: FormData) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/add_product`, {
+            method: 'POST',
+            credentials: 'include', // Include cookies for session authentication
+            body: formData, // FormData automatically sets the correct Content-Type with boundary
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error adding product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Product add error:', error);
+        throw error; // Re-throw to handle in the component
     }
 };
 
