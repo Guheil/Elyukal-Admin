@@ -268,7 +268,10 @@ export default function UsersPage() {
                                                 currentUsers.map((user, index) => (
                                                     <tr key={user.email} className="hover:bg-gray-50">
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                            {user.first_name}
+                                                            <div className="flex items-center gap-2">
+                                                                <UserIcon size={14} className="text-gray-400" />
+                                                                {user.first_name}
+                                                            </div>
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                             {user.last_name}

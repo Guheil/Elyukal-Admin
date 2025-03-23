@@ -34,9 +34,25 @@ export default function AdminLoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [animateBackground, setAnimateBackground] = useState(false);
+    const [adminCount, setAdminCount] = useState(0);
 
     useEffect(() => {
         setAnimateBackground(true);
+        
+        // Fetch admin count
+        const fetchAdminCount = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const response = await fetch(`${apiUrl}/get_total_number_of_admin_users`);
+                const data = await response.json();
+                setAdminCount(data.total_admin_users || 0);
+            } catch (error) {
+                console.error('Error fetching admin count:', error);
+                setAdminCount(0);
+            }
+        };
+        
+        fetchAdminCount();
     }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -194,7 +210,7 @@ export default function AdminLoginPage() {
                             ))}
                         </div>
                         <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular }}>
-                            Join <span className="font-semibold">12 admins</span> currently active
+                            Join <span className="font-semibold">{adminCount} admins</span> currently active
                         </p>
                     </div>
 
@@ -365,20 +381,20 @@ export default function AdminLoginPage() {
                                         <div className="flex-1 h-px" style={{ backgroundColor: COLORS.lightgray }}></div>
                                     </div>
 
-                                    <Button
-                                        type="button"
-                                        className="w-full font-medium py-6 rounded-lg text-base transition-all duration-300 hover:shadow-md relative overflow-hidden group"
+                                    <div 
+                                        className="w-full py-6 rounded-lg text-base transition-all duration-300 relative overflow-hidden group flex flex-col items-center justify-center gap-2 mt-2"
                                         style={{
-                                            backgroundColor: 'white',
-                                            color: COLORS.accent,
-                                            border: `2px solid ${COLORS.gold}`,
+                                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                            backdropFilter: 'blur(5px)',
+                                            border: `2px dashed ${COLORS.gold}`,
                                             fontFamily: FONTS.semibold,
                                         }}
                                     >
-                                        <span className="relative z-10" style={{ color: COLORS.gold, fontFamily: FONTS.semibold }}>Sign in with SSO</span>
-                                        <span className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300"
-                                            style={{ background: COLORS.gold }}></span>
-                                    </Button>
+                                        <span className="relative z-10 text-center" style={{ color: COLORS.primary, fontFamily: FONTS.bold, fontSize: '1.1rem' }}>Welcome to Produkto Elyu-Kal!</span>
+                                        <span className="relative z-10 text-center text-sm" style={{ color: COLORS.accent, fontFamily: FONTS.regular }}>Empowering La Union's local products and communities</span>
+                                        <div className="absolute top-0 left-0 w-full h-full opacity-10 group-hover:opacity-20 transition-opacity duration-300"
+                                            style={{ background: `linear-gradient(135deg, ${COLORS.gradient.start}, ${COLORS.gradient.end})` }}></div>
+                                    </div>
                                 </form>
                             </Form>
                         </CardContent>

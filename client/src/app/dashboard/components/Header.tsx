@@ -1,7 +1,6 @@
 import React from 'react';
-import { Search, Bell, Calendar, ChevronDown } from 'lucide-react';
+import { Bell, Calendar, ChevronDown, BarChart2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { COLORS } from '../../constants/colors';
 
@@ -15,12 +14,11 @@ export default function Header({ user, notificationsCount }: HeaderProps) {
         <header className="h-20 px-6 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: COLORS.white }}>
             <div className="flex items-center gap-4 flex-1">
                 <div className="md:w-72 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                    <Input
-                        placeholder="Search products, customers..."
-                        className="pl-10 pr-4 py-2 rounded-full text-sm border-2"
-                        style={{ borderColor: COLORS.lightgray, backgroundColor: COLORS.lightgray }}
-                    />
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
+                        style={{ backgroundColor: COLORS.lightgray, color: COLORS.gray }}>
+                        <BarChart2 size={18} />
+                        <span className="font-medium">Dashboard Overview</span>
+                    </div>
                 </div>
                 <div className="hidden md:block">
                     <div className="flex items-center gap-2 text-sm" style={{ color: COLORS.gray }}>
@@ -40,14 +38,14 @@ export default function Header({ user, notificationsCount }: HeaderProps) {
                 <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10">
                         <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
-                            {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 
-                             user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
+                            {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() :
+                                user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
                         </AvatarFallback>
                     </Avatar>
                     <div className="hidden md:block max-w-[150px]">
                         <p className="text-sm font-medium truncate" style={{ color: COLORS.accent }}>
-                            {user && 'first_name' in user && 'last_name' in user ? 
-                                `${user.first_name} ${user.last_name}` : 
+                            {user && 'first_name' in user && 'last_name' in user ?
+                                `${user.first_name} ${user.last_name}` :
                                 user && 'email' in user ? user.email : "No Name Available"}
                         </p>
                         <p className="text-xs" style={{ color: COLORS.gray }}>Administrator</p>

@@ -88,3 +88,27 @@ async def get_total_number_of_users():
     except Exception as e:
         logger.exception(f"Error getting total user count: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.get("/get_total_number_of_admin_users")
+async def get_total_number_of_admin_users():
+    """
+    Get the total number of admin users in the system.
+    This endpoint does not require authentication as it only returns a count.
+    """
+    try:
+        # Query the total count of admin users
+        response = supabase_client.table("admin_user").select("email", count="exact").execute()
+        
+        # The count is returned in the response count property
+        total_admin_users = response.count
+        
+        if total_admin_users is None:
+            # Fallback if count property is not available
+            total_admin_users = len(response.data)
+        
+        logger.info(f"Total admin users count: {total_admin_users}")
+        return {"total_admin_users": total_admin_users}
+    
+    except Exception as e:
+        logger.exception(f"Error getting total admin user count: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

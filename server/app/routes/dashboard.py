@@ -73,13 +73,29 @@ async def get_dashboard_stats():
         
         # Calculate product views (using a placeholder value for now)
         product_views = 1250  # This would typically come from an analytics service
+        product_views_growth = 8.2  # Growth percentage for product views
         
         # Calculate order conversion rate (placeholder)
         order_conversion_rate = 5.8  # This would typically come from an analytics service
+        conversion_rate_growth = 1.5  # Growth percentage for conversion rate
+        
+        # Calculate growth percentages for other metrics
+        products_growth = 2.3  # Growth percentage for total products
+        stock_growth = 3.7  # Growth percentage for stock availability
+        users_growth = 5.2  # Growth percentage for active users
         
         # Get top products and recent orders
         top_products = await get_top_products()
         recent_orders = await get_recent_orders()
+        
+        # Fetch total admin users count
+        try:
+            from app.routes.fetch_users import get_total_number_of_admin_users
+            admin_users_response = await get_total_number_of_admin_users()
+            total_admin_users = admin_users_response.get("total_admin_users", 0)
+        except Exception as e:
+            logger.error(f"Error fetching admin users count: {str(e)}")
+            total_admin_users = 0
         
         return {
             "totalProducts": total_products,
@@ -88,8 +104,14 @@ async def get_dashboard_stats():
             "totalReviews": total_reviews,
             "averageRating": avg_rating,
             "productViews": product_views,
+            "productViewsGrowth": product_views_growth,
             "orderConversionRate": order_conversion_rate,
+            "conversionRateGrowth": conversion_rate_growth,
+            "productsGrowth": products_growth,
+            "stockGrowth": stock_growth,
+            "usersGrowth": users_growth,
             "pendingApproval": pending_approval,
+            "totalAdminUsers": total_admin_users,
             "topProducts": top_products,
             "recentOrders": recent_orders
         }

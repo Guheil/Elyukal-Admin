@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { BASE_URL } from '@/config';
 import { PerformanceMetric } from './PerformanceMetric';
 import { COLORS } from '../../constants/colors';
-import { Eye, ShoppingCart, Users, TrendingUp, CheckCircle2, AlertTriangle, Activity, Package } from 'lucide-react';
+import { Eye, ShoppingCart, Users, TrendingUp, CheckCircle2, AlertTriangle, Activity, Package, Star } from 'lucide-react';
+import { fetchPopularProducts, Product } from '../../api/productService';
 
 interface OverviewTabProps {
     analyticsData: any;
@@ -14,20 +15,55 @@ interface OverviewTabProps {
 export default function OverviewTab({ analyticsData }: OverviewTabProps) {
     const [totalProducts, setTotalProducts] = useState<number>(0);
 
+    const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(true);
+
     useEffect(() => {
-        // Fetch total number of products on component mount
-        const fetchTotalProducts = async () => {
+        // Fetch total number of products and popular products on component mount
+        const fetchData = async () => {
             try {
-                const response = await fetch(`${BASE_URL}/get_total_number_of_products`);
-                const data = await response.json();
-                setTotalProducts(data.total_products);
+                // Fetch total products count
+                const countResponse = await fetch(`${BASE_URL}/get_total_number_of_products`);
+                const countData = await countResponse.json();
+                setTotalProducts(countData.total_products);
+
+                // Fetch popular products
+                const productsResponse = await fetchPopularProducts();
+                if (productsResponse && productsResponse.products) {
+                    // Sort by total_reviews in descending order and take top 5
+                    const sortedProducts = [...productsResponse.products]
+                        .sort((a, b) => b.total_reviews - a.total_reviews)
+                        .slice(0, 5);
+                    setPopularProducts(sortedProducts);
+                }
             } catch (error) {
-                console.error('Error fetching total products:', error);
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoadingProducts(false);
             }
         };
 
-        fetchTotalProducts();
+        fetchData();
     }, []);
+
+    // Function to render rating stars
+    const renderRatingStars = (rating: string) => {
+        const ratingValue = parseFloat(rating);
+        return (
+            <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                    <Star
+                        key={i}
+                        size={14}
+                        fill={i < Math.floor(ratingValue) ? COLORS.secondary : 'transparent'}
+                        stroke={COLORS.secondary}
+                        className={i < Math.floor(ratingValue) ? 'text-yellow-400' : 'text-gray-300'}
+                    />
+                ))}
+                <span className="ml-1 text-sm" style={{ color: COLORS.gray }}>{ratingValue.toFixed(1)}</span>
+            </div>
+        );
+    };
 
     const getGrowthClass = (growth: number) =>
         growth >= 0 ? "text-success flex items-center gap-1" : "text-error flex items-center gap-1";
@@ -41,6 +77,55 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
         }
     };
 
+    // Sample admin activities data
+    const adminActivities = [
+        {
+            id: 1,
+            admin: "John Smith",
+            activity: "edited",
+            object: "Summer Collection Store",
+            datetime: "Today, 10:45 AM"
+        },
+        {
+            id: 2,
+            admin: "Sarah Johnson",
+            activity: "added",
+            object: "Bacnotan Honey",
+            datetime: "Today, 9:30 AM"
+        },
+        {
+            id: 3,
+            admin: "Michael Brown",
+            activity: "deleted",
+            object: "Inabel",
+            datetime: "Yesterday, 4:15 PM"
+        },
+        {
+            id: 4,
+            admin: "Emma Wilson",
+            activity: "edited",
+            object: "Surf Miniature Figurine",
+            datetime: "Yesterday, 2:20 PM"
+        },
+        {
+            id: 5,
+            admin: "David Lee",
+            activity: "added",
+            object: "Basi Wine",
+            datetime: "Mar 22, 2025, 11:05 AM"
+        }
+    ];
+
+    // Function to get activity badge color
+    const getActivityBadge = (activity: string) => {
+        switch (activity) {
+            case 'added': return { bg: COLORS.success, text: 'white' };
+            case 'edited': return { bg: COLORS.gradient.middle, text: 'white' };
+            case 'deleted': return { bg: COLORS.error, text: 'white' };
+            default: return { bg: COLORS.gray, text: 'white' };
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -48,49 +133,72 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                 <Card className="col-span-1 lg:col-span-2">
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                            <CardTitle style={{ color: COLORS.accent }}>Top Selling Products</CardTitle>
+                            <CardTitle style={{ color: COLORS.accent }}>Most Reviewed Products</CardTitle>
                             <Button variant="ghost" size="sm" className="text-sm" style={{ color: COLORS.primary }}>
-                                View All
+
                             </Button>
                         </div>
-                        <CardDescription>Products with the highest visibility this month</CardDescription>
+                        <CardDescription>Products with the highest number of customer reviews</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <table className="w-full">
-                            <thead>
-                                <tr className="text-left text-sm" style={{ color: COLORS.gray }}>
-                                    <th className="pb-3 font-medium">Product</th>
-                                    <th className="pb-3 font-medium">Category</th>
-                                    <th className="pb-3 font-medium text-right">Views</th>
-                                    <th className="pb-3 font-medium text-right">Growth</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {analyticsData.topProducts.map((product: any) => (
-                                    <tr key={product.id} className="border-t border-gray-100">
-                                        <td className="py-3">
-                                            <div className="font-medium" style={{ color: COLORS.accent }}>{product.name}</div>
-                                        </td>
-                                        <td className="py-3">
-                                            <Badge variant="outline" className="font-normal rounded-full" style={{ borderColor: COLORS.lightgray }}>
-                                                {product.category}
-                                            </Badge>
-                                        </td>
-                                        <td className="py-3 text-right font-medium">{product.sales}</td>
-                                        <td className="py-3 text-right">
-                                            <span className={getGrowthClass(product.growth)}>
-                                                {product.growth >= 0 ? (
-                                                    <TrendingUp size={14} />
-                                                ) : (
-                                                    <TrendingUp size={14} className="transform rotate-180" />
-                                                )}
-                                                {Math.abs(product.growth)}%
-                                            </span>
-                                        </td>
+                        {loadingProducts ? (
+                            <div className="flex justify-center items-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: COLORS.primary }}></div>
+                            </div>
+                        ) : popularProducts.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-sm" style={{ color: COLORS.gray }}>No products found</p>
+                            </div>
+                        ) : (
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="text-left text-sm" style={{ color: COLORS.gray }}>
+                                        <th className="pb-3 font-medium">Product</th>
+                                        <th className="pb-3 font-medium">Category</th>
+                                        <th className="pb-3 font-medium">Rating</th>
+                                        <th className="pb-3 font-medium text-right">Reviews</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {popularProducts.map((product) => (
+                                        <tr key={product.id} className="border-t border-gray-100">
+                                            <td className="py-3">
+                                                <div className="flex items-center gap-3">
+                                                    {product.image_urls && product.image_urls.length > 0 ? (
+                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                                                            <img
+                                                                src={product.image_urls[0]}
+                                                                alt={product.name}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).src = '/placeholder.png';
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                                            <Package size={16} style={{ color: COLORS.gray }} />
+                                                        </div>
+                                                    )}
+                                                    <div className="font-medium" style={{ color: COLORS.accent }}>{product.name}</div>
+                                                </div>
+                                            </td>
+                                            <td className="py-3">
+                                                <Badge variant="outline" className="font-normal rounded-full" style={{ borderColor: COLORS.lightgray }}>
+                                                    {product.category}
+                                                </Badge>
+                                            </td>
+                                            <td className="py-3">
+                                                {renderRatingStars(product.average_rating)}
+                                            </td>
+                                            <td className="py-3 text-right font-medium">
+                                                {product.total_reviews}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -106,35 +214,35 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                                 icon={<Eye size={18} style={{ color: COLORS.primary }} />}
                                 label="Product Views"
                                 value={(analyticsData.productViews?.toLocaleString() || '0')}
-                                change={8.2}
+                                change={analyticsData.productViewsGrowth || 0}
                                 color={COLORS.primary}
                             />
                             <PerformanceMetric
                                 icon={<ShoppingCart size={18} style={{ color: COLORS.success }} />}
-                                label="Interest Rate"
+                                label="Conversion Rate"
                                 value={`${analyticsData.orderConversionRate || 0}%`}
-                                change={1.5}
+                                change={analyticsData.conversionRateGrowth || 0}
                                 color={COLORS.success}
                             />
                             <PerformanceMetric
                                 icon={<Package size={18} style={{ color: COLORS.gold }} />}
                                 label="Total Products"
                                 value={totalProducts.toLocaleString()}
-                                change={0}
+                                change={analyticsData.productsGrowth || 0}
                                 color={COLORS.gold}
                             />
                             <PerformanceMetric
                                 icon={<Package size={18} style={{ color: COLORS.gold }} />}
                                 label="Stock Availability"
                                 value={`${Math.round(((totalProducts || 0) - (analyticsData.pendingApproval || 0)) / (totalProducts || 1) * 100)}%`}
-                                change={3.7}
+                                change={analyticsData.stockGrowth || 0}
                                 color={COLORS.gold}
                             />
                             <PerformanceMetric
                                 icon={<Users size={18} style={{ color: COLORS.gradient.middle }} />}
-                                label="New Visitors"
-                                value="235" // Hypothetical value
-                                change={15.3}
+                                label="Active Users"
+                                value={analyticsData.totalAdminUsers?.toString() || '0'}
+                                change={analyticsData.usersGrowth || 0}
                                 color={COLORS.gradient.middle}
                             />
                         </div>
@@ -150,45 +258,43 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Recent Product Updates */}
+                {/* Recent Admin Activities */}
                 <Card className="col-span-1 lg:col-span-2">
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                            <CardTitle style={{ color: COLORS.accent }}>Recent Product Updates</CardTitle>
+                            <CardTitle style={{ color: COLORS.accent }}>Recent Admin Activities</CardTitle>
                             <Button variant="ghost" size="sm" className="text-sm" style={{ color: COLORS.primary }}>
-                                View All Updates
+                                View All Activities
                             </Button>
                         </div>
-                        <CardDescription>Latest changes to product listings</CardDescription>
+                        <CardDescription>Latest admin actions in the system</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <table className="w-full">
+                        <table className="w-full table-fixed">
                             <thead>
                                 <tr className="text-left text-sm" style={{ color: COLORS.gray }}>
-                                    <th className="pb-3 font-medium">Product ID</th>
-                                    <th className="pb-3 font-medium">Product</th>
-                                    <th className="pb-3 font-medium">Updated By</th>
-                                    <th className="pb-3 font-medium">Date</th>
-                                    <th className="pb-3 font-medium">Status</th>
+                                    <th className="pb-3 font-medium w-1/4">Admin</th>
+                                    <th className="pb-3 font-medium w-1/6">Activity</th>
+                                    <th className="pb-3 font-medium w-1/3">Object</th>
+                                    <th className="pb-3 font-medium w-1/4">Date & Time</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {analyticsData.recentOrders.map((update: any) => {
-                                    const statusStyles = getStatusBadge(update.status === "Completed" ? "Active" : update.status === "Processing" ? "Pending" : "Low Stock");
+                            <tbody className="divide-y divide-gray-100">
+                                {adminActivities.map((activity) => {
+                                    const activityStyles = getActivityBadge(activity.activity);
                                     return (
-                                        <tr key={update.id} className="border-t border-gray-100">
-                                            <td className="py-3 font-medium" style={{ color: COLORS.primary }}>{update.id}</td>
-                                            <td className="py-3">{update.product}</td>
-                                            <td className="py-3">{update.customer}</td>
-                                            <td className="py-3 text-sm" style={{ color: COLORS.gray }}>{update.date}</td>
+                                        <tr key={activity.id} className="h-16">
+                                            <td className="py-3 font-medium" style={{ color: COLORS.accent }}>{activity.admin}</td>
                                             <td className="py-3">
                                                 <Badge
                                                     className="rounded-full px-2 py-1 text-xs font-normal"
-                                                    style={{ backgroundColor: statusStyles.bg, color: statusStyles.text }}
+                                                    style={{ backgroundColor: activityStyles.bg, color: activityStyles.text }}
                                                 >
-                                                    {update.status === "Completed" ? "Active" : update.status === "Processing" ? "Pending" : "Low Stock"}
+                                                    {activity.activity}
                                                 </Badge>
                                             </td>
+                                            <td className="py-3 truncate">{activity.object}</td>
+                                            <td className="py-3 text-sm" style={{ color: COLORS.gray }}>{activity.datetime}</td>
                                         </tr>
                                     );
                                 })}

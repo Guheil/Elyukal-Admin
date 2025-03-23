@@ -30,7 +30,8 @@ export const fetchDashboardStats = async () => {
             averageRating: 0,
             productViews: 0,
             orderConversionRate: 0,
-            pendingApproval: 0
+            pendingApproval: 0,
+            totalAdminUsers: 0
         };
     }
 };

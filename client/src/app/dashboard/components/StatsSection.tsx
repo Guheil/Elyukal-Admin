@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useState } from'react';
 import { BASE_URL } from '@/config';
 import { StatsCard } from './StatsCard'; // Import the component
-import { Package, Tag, MapPin, Star } from 'lucide-react';
+import { Package, Tag, MapPin, Star, Users } from 'lucide-react';
 import { COLORS } from '../../constants/colors';
 
 interface StatsSectionProps {
@@ -15,6 +15,7 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
     const [totalCategories, setTotalCategories] = useState<number>(0);
     const [totalStores, setTotalStores] = useState<number>(0);
     const [totalReviews, setTotalReviews] = useState<number>(0);
+    const [totalAdminUsers, setTotalAdminUsers] = useState<number>(0);
     
     useEffect(() => {
         // Fetch all stats on component mount
@@ -39,6 +40,11 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
                 const reviewsResponse = await fetch(`${BASE_URL}/get_total_number_of_reviews`);
                 const reviewsData = await reviewsResponse.json();
                 setTotalReviews(reviewsData.total_reviews);
+                
+                // Fetch total admin users
+                const adminUsersResponse = await fetch(`${BASE_URL}/get_total_number_of_admin_users`);
+                const adminUsersData = await adminUsersResponse.json();
+                setTotalAdminUsers(adminUsersData.total_admin_users);
             } catch (error) {
                 console.error('Error fetching stats:', error);
             }
@@ -46,8 +52,15 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
 
         fetchStats();
     }, []);
+    
+    // Use the totalAdminUsers from analyticsData if available
+    useEffect(() => {
+        if (analyticsData && analyticsData.totalAdminUsers !== undefined) {
+            setTotalAdminUsers(analyticsData.totalAdminUsers);
+        }
+    }, [analyticsData]);
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <StatsCard
                 title="Total Products"
                 value={totalProducts.toLocaleString()}
@@ -75,6 +88,13 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
                 description={`${analyticsData.averageRating} average rating`}
                 icon={<Star />}
                 color={COLORS.gradient.middle}
+            />
+            <StatsCard
+                title="Admin Users"
+                value={totalAdminUsers.toLocaleString()}
+                description="Platform administrators"
+                icon={<Users />}
+                color={COLORS.accent}
             />
         </div>
     );
