@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Upload, ArrowLeft } from 'lucide-react';
 import { fetchStores, Store } from '../../api/storeService';
+import { fetchMunicipalities, Municipality } from '../../api/municipalityService';
 
 import Sidebar from '../../dashboard/components/Sidebar';
 import Header from '../../dashboard/components/Header';
@@ -38,6 +39,7 @@ const productFormSchema = z.object({
   address: z.string().min(5, { message: 'Address must be at least 5 characters' }),
   in_stock: z.boolean().default(true),
   store_id: z.string().min(1, { message: 'Please select a valid store' }),
+  town: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -55,6 +57,10 @@ export default function AddProductPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loadingStores, setLoadingStores] = useState(true);
 
+  // Municipalities data from API
+  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+  const [loadingMunicipalities, setLoadingMunicipalities] = useState(true);
+  
   // Sample categories (would come from API in a real implementation)
   const categories = [
     'Handicrafts',
@@ -78,6 +84,7 @@ export default function AddProductPage() {
       address: '',
       in_stock: true,
       store_id: '',
+      town: '',
     },
   });
 
@@ -114,7 +121,22 @@ export default function AddProductPage() {
       }
     };
 
+    const loadMunicipalities = async () => {
+      setLoadingMunicipalities(true);
+      try {
+        const municipalitiesData = await fetchMunicipalities();
+        if (municipalitiesData && Array.isArray(municipalitiesData)) {
+          setMunicipalities(municipalitiesData);
+        }
+      } catch (error) {
+        console.error('Error loading municipalities:', error);
+      } finally {
+        setLoadingMunicipalities(false);
+      }
+    };
+
     loadStores();
+    loadMunicipalities();
   }, []);
 
   const removeImage = (index: number) => {
@@ -296,6 +318,34 @@ export default function AddProductPage() {
                                 {stores.map((store) => (
                                   <option key={store.store_id} value={store.store_id}>
                                     {store.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Town/Municipality */}
+                      <FormField
+                        control={form.control}
+                        name="town"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel style={{ color: COLORS.gray }}>Town/Municipality</FormLabel>
+                            <FormControl>
+                              <select
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                {...field}
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                disabled={loadingMunicipalities}
+                              >
+                                <option value="">{loadingMunicipalities ? 'Loading municipalities...' : 'Select a municipality'}</option>
+                                {municipalities.map((municipality) => (
+                                  <option key={municipality.id} value={municipality.id.toString()}>
+                                    {municipality.name}
                                   </option>
                                 ))}
                               </select>
