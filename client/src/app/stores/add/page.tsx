@@ -7,13 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Upload, ArrowLeft, MapPin } from 'lucide-react';
 import MapPreview from '../components/MapPreview';
-
 import Sidebar from '../../dashboard/components/Sidebar';
 import Header from '../../dashboard/components/Header';
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +46,7 @@ export default function AddStorePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [storeImage, setStoreImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  
+
   // Sample store types (would come from API in a real implementation)
   const storeTypes = [
     'Marketplace',
@@ -78,39 +76,35 @@ export default function AddStorePage() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setStoreImage(file);
-      
-      // Create preview URL
       const previewUrl = URL.createObjectURL(file);
       setImagePreviewUrl(previewUrl);
     }
   };
 
   const removeImage = () => {
-    // Revoke the object URL to avoid memory leaks
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
     }
-    
     setStoreImage(null);
     setImagePreviewUrl(null);
   };
 
+  const handleCoordinatesChange = (lat: number, lng: number) => {
+    form.setValue('latitude', lat);
+    form.setValue('longitude', lng);
+  };
+
   const onSubmit = async (data: StoreFormValues) => {
     setIsSubmitting(true);
-    
+
     try {
-      // In a real implementation, we would upload the store image to storage
-      // and then send the store data with URL to the backend
       console.log('Form data:', data);
       console.log('Store image:', storeImage);
-      
+
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Show success message
+
       alert('Store added successfully! (Frontend only)');
-      
-      // Redirect to stores page
       router.push('/stores');
     } catch (error) {
       console.error('Error adding store:', error);
@@ -129,8 +123,8 @@ export default function AddStorePage() {
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="mb-2 flex items-center gap-1 text-gray-500 hover:text-gray-700"
                   onClick={() => router.back()}
                 >
@@ -151,7 +145,6 @@ export default function AddStorePage() {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Store Name */}
                       <FormField
                         control={form.control}
                         name="name"
@@ -166,7 +159,6 @@ export default function AddStorePage() {
                         )}
                       />
 
-                      {/* Store Type */}
                       <FormField
                         control={form.control}
                         name="type"
@@ -191,7 +183,6 @@ export default function AddStorePage() {
                         )}
                       />
 
-                      {/* Phone */}
                       <FormField
                         control={form.control}
                         name="phone"
@@ -206,7 +197,6 @@ export default function AddStorePage() {
                         )}
                       />
 
-                      {/* Operating Hours */}
                       <FormField
                         control={form.control}
                         name="operating_hours"
@@ -221,7 +211,6 @@ export default function AddStorePage() {
                         )}
                       />
 
-                      {/* Latitude */}
                       <FormField
                         control={form.control}
                         name="latitude"
@@ -236,7 +225,6 @@ export default function AddStorePage() {
                         )}
                       />
 
-                      {/* Longitude */}
                       <FormField
                         control={form.control}
                         name="longitude"
@@ -252,7 +240,6 @@ export default function AddStorePage() {
                       />
                     </div>
 
-                    {/* Description */}
                     <FormField
                       control={form.control}
                       name="description"
@@ -271,7 +258,6 @@ export default function AddStorePage() {
                       )}
                     />
 
-                    {/* Store Image Upload */}
                     <div className="space-y-3">
                       <Label style={{ color: COLORS.gray }}>Store Image</Label>
                       <div className="flex items-center gap-4">
@@ -282,8 +268,7 @@ export default function AddStorePage() {
                           </div>
                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                         </label>
-                        
-                        {/* Image Preview */}
+
                         {imagePreviewUrl && (
                           <div className="relative w-32 h-32">
                             <img
@@ -306,19 +291,18 @@ export default function AddStorePage() {
                       </p>
                     </div>
 
-                    {/* Location Map Preview */}
                     <div className="space-y-3">
                       <Label style={{ color: COLORS.gray }}>Location Preview</Label>
-                      <MapPreview 
-                        latitude={parseFloat(form.watch('latitude') as unknown as string) || 16.6157} 
-                        longitude={parseFloat(form.watch('longitude') as unknown as string) || 120.3210} 
+                      <MapPreview
+                        latitude={parseFloat(form.watch('latitude') as unknown as string) || 16.6157}
+                        longitude={parseFloat(form.watch('longitude') as unknown as string) || 120.3210}
+                        onCoordinatesChange={handleCoordinatesChange}
                       />
                       <p className="text-xs" style={{ color: COLORS.gray }}>
-                        Map updates automatically as you change latitude and longitude values
+                        Click on the map to set coordinates or enter them manually above
                       </p>
                     </div>
 
-                    {/* Submit Button */}
                     <div className="flex justify-end">
                       <Button
                         type="submit"
