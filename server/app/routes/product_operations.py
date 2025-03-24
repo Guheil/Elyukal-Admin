@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, P
 from app.db.database import supabase_client
 from app.schemas.product import Products
 from app.auth.auth_handler import get_current_user
+from app.utils.activity_logger import log_admin_activity
 from typing import List, Optional
 import uuid
 import json
@@ -15,6 +16,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# This function has been removed and imported from app.utils.activity_logger instead
 
 @router.post("/add_product")
 async def add_product(
@@ -119,6 +122,9 @@ async def add_product(
         if not response.data:
             logger.error("Supabase returned no data after insert")
             raise HTTPException(status_code=500, detail="Failed to add product")
+        
+        # Log admin activity for adding product
+        await log_admin_activity(current_user, "added", name)
         
         logger.info(f"Successfully added product with ID: {product_id}")
         return {"message": "Product added successfully", "product": response.data[0]}
@@ -270,9 +276,47 @@ async def update_product(
             logger.error("Supabase returned no data after update")
             raise HTTPException(status_code=500, detail="Failed to update product")
         
+        # Log admin activity for updating product
+        await log_admin_activity(current_user, "edited", name)
+        
         logger.info(f"Successfully updated product with ID: {product_id}")
         return {"message": "Product updated successfully", "product": response.data[0]}
         
     except Exception as e:
         logger.error(f"Error updating product: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error updating product: {str(e)}")
+
+@router.delete("/delete_product/{product_id}")
+async def delete_product(product_id: int = Path(...), current_user: dict = Depends(get_current_user)):
+    try:
+        logger.info(f"Starting product deletion for product_id: {product_id}")
+        
+        # First, check if the product exists and get its name for logging
+        product_response = supabase_client.table("products").select("*").eq("id", product_id).execute()
+        
+        if not product_response.data or len(product_response.data) == 0:
+            logger.error(f"Product with ID {product_id} not found")
+            raise HTTPException(status_code=404, detail=f"Product with ID {product_id} not found")
+        
+        existing_product = product_response.data[0]
+        product_name = existing_product.get("name", f"Product {product_id}")
+        
+        # Delete the product from the database
+        delete_response = supabase_client.table("products").delete().eq("id", product_id).execute()
+        
+        if not delete_response.data:
+            logger.error(f"Failed to delete product with ID {product_id}")
+            raise HTTPException(status_code=500, detail="Failed to delete product")
+        
+        # Log admin activity for deleting product
+        await log_admin_activity(current_user, "deleted", product_name)
+        
+        logger.info(f"Successfully deleted product with ID: {product_id}")
+        return {"message": "Product deleted successfully"}
+        
+    except HTTPException as he:
+        # Re-raise HTTP exceptions
+        raise he
+    except Exception as e:
+        logger.error(f"Error deleting product: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error deleting product: {str(e)}")
