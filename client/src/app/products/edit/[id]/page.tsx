@@ -15,6 +15,7 @@ import Header from '../../../dashboard/components/Header';
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../../../constants/colors';
 import { FONTS } from '../../../constants/fonts';
+import { FeedbackModal } from '@/components/ui/feedback-modal';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,12 @@ export default function EditProductPage() {
     const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
     const [arAssetFile, setArAssetFile] = useState<File | null>(null);
     const [keepArAsset, setKeepArAsset] = useState(true);
+    
+    // Modal state
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [modalType, setModalType] = useState<'success' | 'error'>('success');
+    const [modalTitle, setModalTitle] = useState('');
+    const [modalDescription, setModalDescription] = useState('');
 
     // Store data from API
     const [stores, setStores] = useState<Store[]>([]);
@@ -245,16 +252,32 @@ export default function EditProductPage() {
             // Send the data to the backend
             const response = await updateProduct(productId, formData);
 
-            alert('Product updated successfully!');
-            router.push('/products');
+            // Show success message with modal
+            setModalType('success');
+            setModalTitle('Product Updated Successfully');
+            setModalDescription('Your product has been updated in the marketplace.');
+            setShowFeedbackModal(true);
         } catch (error) {
             console.error('Error updating product:', error);
-            alert('Error updating product. Please try again.');
+            
+            // Show error message with modal
+            setModalType('error');
+            setModalTitle('Error Updating Product');
+            setModalDescription('There was a problem updating your product. Please try again.');
+            setShowFeedbackModal(true);
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    // Handle modal close and redirect if success
+    const handleModalClose = () => {
+        setShowFeedbackModal(false);
+        if (modalType === 'success') {
+            router.push('/products');
+        }
+    };
+    
     if (isLoading) {
         return (
             <div className="min-h-screen flex bg-container" style={{ backgroundColor: COLORS.container }}>
@@ -597,6 +620,16 @@ export default function EditProductPage() {
                     </div>
                 </main>
             </div>
+            
+            {/* Feedback Modal */}
+            <FeedbackModal
+                isOpen={showFeedbackModal}
+                onClose={handleModalClose}
+                title={modalTitle}
+                description={modalDescription}
+                type={modalType}
+                actionLabel={modalType === 'success' ? 'Go to Products' : 'Try Again'}
+            />
         </div>
     );
 }

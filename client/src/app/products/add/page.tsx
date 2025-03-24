@@ -14,6 +14,7 @@ import Header from '../../dashboard/components/Header';
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
+import { FeedbackModal } from '@/components/ui/feedback-modal';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,12 @@ export default function AddProductPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [arAssetFile, setArAssetFile] = useState<File | null>(null);
+  
+  // Modal state
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalDescription, setModalDescription] = useState('');
   
   // Store data from API
   const [stores, setStores] = useState<Store[]>([]);
@@ -187,16 +194,29 @@ export default function AddProductPage() {
       // Send the data to the backend
       const response = await addProduct(formData);
       
-      // Show success message
-      alert('Product added successfully!');
-      
-      // Redirect to products page
-      router.push('/products');
+      // Show success message with modal
+      setModalType('success');
+      setModalTitle('Product Added Successfully');
+      setModalDescription('Your product has been added to the marketplace.');
+      setShowFeedbackModal(true);
     } catch (error) {
       console.error('Error adding product:', error);
-      alert('Error adding product. Please try again.');
+      
+      // Show error message with modal
+      setModalType('error');
+      setModalTitle('Error Adding Product');
+      setModalDescription('There was a problem adding your product. Please try again.');
+      setShowFeedbackModal(true);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle modal close and redirect if success
+  const handleModalClose = () => {
+    setShowFeedbackModal(false);
+    if (modalType === 'success') {
+      router.push('/products');
     }
   };
 
@@ -521,6 +541,16 @@ export default function AddProductPage() {
                     </div>
                 </main>
             </div>
+      
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={handleModalClose}
+        title={modalTitle}
+        description={modalDescription}
+        type={modalType}
+        actionLabel={modalType === 'success' ? 'Go to Products' : 'Try Again'}
+      />
         </div>
     );
 }
