@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 logger = logging.getLogger(__name__)
 
 SESSION_COOKIE_NAME = "session_id"
-SESSION_EXPIRY_MINUTES = 30
+SESSION_EXPIRY_MINUTES = 1440  # 24 hours
 
 async def get_current_user(request: Request) -> dict:
     """Verify the session ID from the cookie and retrieve user data from Supabase."""

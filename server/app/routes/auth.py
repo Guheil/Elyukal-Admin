@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 SESSION_COOKIE_NAME = "session_id"
-SESSION_EXPIRY_MINUTES = 30  
+SESSION_EXPIRY_MINUTES = 1440  # 24 hours  
 
 def set_session_cookie(response: Response, session_id: str):
     """Set an HTTP-only session cookie with secure attributes."""
@@ -25,7 +25,7 @@ def set_session_cookie(response: Response, session_id: str):
         httponly=True,  # Prevent JavaScript access
         secure=False,   # Set to False for HTTP in development, True for production HTTPS
         samesite="lax",  # Use 'lax' for better compatibility in development
-        max_age=SESSION_EXPIRY_MINUTES * 60,  # Cookie expiry in seconds
+        max_age=SESSION_EXPIRY_MINUTES * 60,  # Cookie expiry in seconds (24 hours)
     )
 
 def delete_session_cookie(response: Response):
