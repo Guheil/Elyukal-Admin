@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
-import { Search, Filter, ArrowUpDown, User as UserIcon, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, User as UserIcon, Clock, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { fetchActivities } from '../api/activityService';
 
 interface Activity {
     id: string;
@@ -22,14 +23,15 @@ interface Activity {
     created_at: string;
 }
 
-const fetchActivities = async (): Promise<Activity[]> => {
-    // This is a mock implementation - replace with actual API call
-    return [
-        // Sample data
-        { id: '1', admin_id: 'a1', admin_name: 'John Doe', activity: 'added', object: 'Product: Bauang Grape', created_at: '2025-03-23T10:00:00Z' },
-        { id: '2', admin_id: 'a2', admin_name: 'Jane Smith', activity: 'edited', object: 'Product: Aringay Bangus', created_at: '2025-03-23T12:00:00Z' },
-    ];
-};
+// Remove the mock implementation
+// const fetchActivities = async (): Promise<Activity[]> => {
+//     // This is a mock implementation - replace with actual API call
+//     return [
+//         // Sample data
+//         { id: '1', admin_id: 'a1', admin_name: 'John Doe', activity: 'added', object: 'Product: Bauang Grape', created_at: '2025-03-23T10:00:00Z' },
+//         { id: '2', admin_id: 'a2', admin_name: 'Jane Smith', activity: 'edited', object: 'Product: Aringay Bangus', created_at: '2025-03-23T12:00:00Z' },
+//     ];
+// };
 
 export default function ActivityHistoryPage() {
     const { user } = useAuth();
@@ -259,8 +261,18 @@ export default function ActivityHistoryPage() {
                                                 </tr>
                                             ) : currentActivities.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
-                                                        No activities found
+                                                    <td colSpan={4} className="px-6 py-16 text-center">
+                                                        <div className="flex flex-col items-center justify-center gap-3">
+                                                            <div className="rounded-full bg-gray-100 p-3">
+                                                                <Activity size={24} className="text-gray-400" />
+                                                            </div>
+                                                            <h3 className="text-lg font-medium" style={{ color: COLORS.gray }}>
+                                                                No activities found
+                                                            </h3>
+                                                            <p className="text-sm text-gray-500 max-w-md text-center">
+                                                                There are no admin activities recorded yet. Activities will appear here when admins add, edit, or delete items.
+                                                            </p>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ) : (
