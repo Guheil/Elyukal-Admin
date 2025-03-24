@@ -71,9 +71,16 @@ async def get_dashboard_stats():
         else:
             pending_approval = 0
         
-        # Calculate product views (using a placeholder value for now)
-        product_views = 1250  # This would typically come from an analytics service
-        product_views_growth = 8.2  # Growth percentage for product views
+        # Calculate total product views from the database
+        try:
+            views_response = supabase_client.table("products").select("views").execute()
+            product_views = sum([p.get("views", 0) for p in views_response.data]) if views_response.data else 0
+            # Keep the growth percentage as a placeholder for now
+            product_views_growth = 8.2  # Growth percentage for product views
+        except Exception as e:
+            logger.error(f"Error calculating product views: {str(e)}")
+            product_views = 0
+            product_views_growth = 0
         
         # Calculate order conversion rate (placeholder)
         order_conversion_rate = 5.8  # This would typically come from an analytics service

@@ -27,6 +27,14 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                 const countData = await countResponse.json();
                 setTotalProducts(countData.total_products);
 
+                // Fetch total product views
+                const viewsResponse = await fetch(`${BASE_URL}/get_total_number_of_product_views`);
+                const viewsData = await viewsResponse.json();
+                // Update analyticsData with the total product views
+                if (analyticsData && typeof analyticsData === 'object') {
+                    analyticsData.productViews = viewsData.total_product_views;
+                }
+
                 // Fetch popular products
                 const productsResponse = await fetchPopularProducts();
                 if (productsResponse && productsResponse.products) {
@@ -44,7 +52,7 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
         };
 
         fetchData();
-    }, []);
+    }, [analyticsData]);
 
     // Function to render rating stars
     const renderRatingStars = (rating: string) => {
