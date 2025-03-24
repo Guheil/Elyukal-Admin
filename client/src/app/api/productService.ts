@@ -128,3 +128,52 @@ export const fetchPopularProducts = async () => {
         return { products: [] };
     }
 };
+
+/**
+ * Fetch a product by ID
+ */
+export const fetchProductById = async (productId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/fetch_product/${productId}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Product fetch error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};
+
+/**
+ * Update an existing product with images and optional AR asset
+ */
+export const updateProduct = async (productId: number, formData: FormData) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/update_product/${productId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: formData, // FormData automatically sets the correct Content-Type with boundary
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error updating product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Product update error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};

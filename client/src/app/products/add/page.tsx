@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, Upload, ArrowLeft } from 'lucide-react';
+import { X, Upload, ArrowLeft, Box } from 'lucide-react';
 import { fetchStores, Store } from '../../api/storeService';
 import { fetchMunicipalities, Municipality } from '../../api/municipalityService';
 
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ModelViewer } from '@/components/ui/model-viewer';
 import {
   Form,
   FormControl,
@@ -480,6 +481,23 @@ export default function AddProductPage() {
                                             <p className="text-xs" style={{ color: COLORS.gray }}>
                                                 Upload a 3D model to enable AR viewing. Supported formats: GLB only
                                             </p>
+                                            
+                                            {/* AR Model Preview */}
+                                            <div className="mt-4">
+                                                <Label style={{ color: COLORS.gray }}>AR Model Preview</Label>
+                                                <div className="h-64 mt-2 border rounded-lg overflow-hidden">
+                                                    {arAssetFile ? (
+                                                        <div className="flex items-center justify-center h-full bg-gray-50">
+                                                            <p className="text-sm text-gray-500">Preview will be available after saving</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center h-full bg-gray-50">
+                                                            <Box className="w-12 h-12 text-gray-300 mb-2" />
+                                                            <p className="text-sm text-gray-500">No 3D model available</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {/* Submit Button */}

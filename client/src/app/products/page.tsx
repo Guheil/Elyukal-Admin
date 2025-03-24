@@ -91,8 +91,7 @@ export default function ProductsPage() {
     };
 
     const handleEdit = (productId: number) => {
-        // This will be implemented later
-        console.log('Edit product:', productId);
+        router.push(`/products/edit/${productId}`);
     };
 
     const handleDelete = (productId: number) => {
