@@ -11,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
-import { Search, Filter, ArrowUpDown, Edit, Trash2, Star, Image, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Edit, Trash2, Star, Image, Plus, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import { fetchProducts } from '../api/productService';
 import { Product } from '../api/productService';
+import { ReviewModal } from '@/components/ui/review-modal';
 
 export default function ProductsPage() {
     const { user } = useAuth();
@@ -26,6 +27,8 @@ export default function ProductsPage() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const productsPerPage = 8;
 
     useEffect(() => {
@@ -97,6 +100,11 @@ export default function ProductsPage() {
     const handleDelete = (productId: number) => {
         // This will be implemented later
         console.log('Delete product:', productId);
+    };
+
+    const handleViewReviews = (product: Product) => {
+        setSelectedProduct(product);
+        setReviewModalOpen(true);
     };
 
     const renderPagination = () => {
@@ -309,34 +317,49 @@ export default function ProductsPage() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <CardContent className="p-5 flex-grow">
-                                                    {/* Rest of the CardContent remains unchanged */}
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h3 className="font-semibold truncate text-lg" style={{ color: COLORS.accent }}>{product.name}</h3>
-                                                        <div className="flex items-center bg-gray-50 px-2 py-1 rounded-md" style={{ backgroundColor: COLORS.lightgray }}>
-                                                            <Star size={14} fill={COLORS.gold} stroke={COLORS.gold} />
-                                                            <span className="text-sm ml-1 font-medium">{product.average_rating}</span>
+                                                <CardContent className="p-5 flex-grow flex flex-col">
+                                                    {/* Product info section with fixed height */}
+                                                    <div className="flex-grow" style={{ minHeight: '180px' }}>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h3 className="font-semibold truncate text-lg" style={{ color: COLORS.accent }}>{product.name}</h3>
+                                                            <div className="flex items-center bg-gray-50 px-2 py-1 rounded-md" style={{ backgroundColor: COLORS.lightgray }}>
+                                                                <Star size={14} fill={COLORS.gold} stroke={COLORS.gold} />
+                                                                <span className="text-sm ml-1 font-medium">{product.average_rating}</span>
+                                                            </div>
+                                                        </div>
+                                                        <Badge variant="outline" className="mb-3 px-3 py-1 font-normal text-xs rounded-full" style={{ borderColor: COLORS.highlight, color: COLORS.highlight, backgroundColor: `${COLORS.highlight}10` }}>
+                                                            {product.category}
+                                                        </Badge>
+                                                        <p className="text-sm mb-3 line-clamp-2" style={{ color: COLORS.gray }}>
+                                                            {product.description}
+                                                        </p>
+                                                        <div className="flex justify-between items-end mt-2">
+                                                            <div>
+                                                                <p className="text-xs" style={{ color: COLORS.gray }}>Price Range</p>
+                                                                <p className="font-semibold text-lg" style={{ color: COLORS.primary }}>
+                                                                    ₱{product.price_min.toLocaleString()} - ₱{product.price_max.toLocaleString()}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-xs" style={{ color: COLORS.gray }}>Store</p>
+                                                                <p className="text-sm font-medium" style={{ color: COLORS.accent }}>
+                                                                    {product.stores.name}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <Badge variant="outline" className="mb-3 px-3 py-1 font-normal text-xs rounded-full" style={{ borderColor: COLORS.highlight, color: COLORS.highlight, backgroundColor: `${COLORS.highlight}10` }}>
-                                                        {product.category}
-                                                    </Badge>
-                                                    <p className="text-sm mb-3 line-clamp-2" style={{ color: COLORS.gray }}>
-                                                        {product.description}
-                                                    </p>
-                                                    <div className="flex justify-between items-end mt-2">
-                                                        <div>
-                                                            <p className="text-xs" style={{ color: COLORS.gray }}>Price Range</p>
-                                                            <p className="font-semibold text-lg" style={{ color: COLORS.primary }}>
-                                                                ₱{product.price_min.toLocaleString()} - ₱{product.price_max.toLocaleString()}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-xs" style={{ color: COLORS.gray }}>Store</p>
-                                                            <p className="text-sm font-medium" style={{ color: COLORS.accent }}>
-                                                                {product.stores.name}
-                                                            </p>
-                                                        </div>
+                                                    {/* Review button at the bottom */}
+                                                    <div className="mt-auto pt-3">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleViewReviews(product)}
+                                                            className="w-full flex items-center justify-center gap-1"
+                                                            style={{ borderColor: COLORS.lightgray, color: COLORS.accent }}
+                                                        >
+                                                            <MessageSquare size={14} />
+                                                            View Reviews ({product.total_reviews})
+                                                        </Button>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -346,6 +369,16 @@ export default function ProductsPage() {
 
                         {/* Pagination */}
                         {!loading && sortedProducts.length > 0 && renderPagination()}
+                        
+                        {/* Review Modal */}
+                        {selectedProduct && (
+                            <ReviewModal
+                                isOpen={reviewModalOpen}
+                                onClose={() => setReviewModalOpen(false)}
+                                productId={selectedProduct.id}
+                                productName={selectedProduct.name}
+                            />
+                        )}
                     </div>
                 </main>
             </div>

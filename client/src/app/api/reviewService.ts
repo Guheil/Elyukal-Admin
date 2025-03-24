@@ -49,7 +49,7 @@ export const submitReview = async (reviewData: ReviewSubmission) => {
 /**
  * Fetch reviews for a specific product
  */
-export const fetchProductReviews = async (productId: number): Promise<Review[]> => {
+export const fetchProductReviews = async (productId: number | string): Promise<Review[]> => {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         const response = await fetch(`${apiUrl}/reviews/${productId}`, {
