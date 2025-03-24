@@ -507,9 +507,10 @@ export default function AddProductPage() {
                                                 <Label style={{ color: COLORS.gray }}>AR Model Preview</Label>
                                                 <div className="h-64 mt-2 border rounded-lg overflow-hidden">
                                                     {arAssetFile ? (
-                                                        <div className="flex items-center justify-center h-full bg-gray-50">
-                                                            <p className="text-sm text-gray-500">Preview will be available after saving</p>
-                                                        </div>
+                                                        <ModelViewer 
+                                                            src={arAssetFile} 
+                                                            className="w-full h-full" 
+                                                        />
                                                     ) : (
                                                         <div className="flex flex-col items-center justify-center h-full bg-gray-50">
                                                             <Box className="w-12 h-12 text-gray-300 mb-2" />

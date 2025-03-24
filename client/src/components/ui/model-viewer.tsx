@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box } from 'lucide-react';
 
 // No inline type declarations - they're now in custom-types.d.ts
 
 interface ModelViewerProps {
-    src: string;
+    src: string | File;
     alt?: string;
     poster?: string;
     className?: string;
@@ -15,11 +15,28 @@ interface ModelViewerProps {
 
 export function ModelViewer({ src, alt = 'A 3D model', poster, className, style }: ModelViewerProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const [objectUrl, setObjectUrl] = useState<string | null>(null);
 
     useEffect(() => {
         // Dynamically import the model-viewer web component
         import('@google/model-viewer');
     }, []);
+    
+    useEffect(() => {
+        // If src is a File object, create an object URL
+        if (src instanceof File) {
+            const url = URL.createObjectURL(src);
+            setObjectUrl(url);
+            
+            // Clean up the object URL when component unmounts or src changes
+            return () => {
+                URL.revokeObjectURL(url);
+                setObjectUrl(null);
+            };
+        } else {
+            setObjectUrl(null);
+        }
+    }, [src]);
 
     if (!src) {
         return (
@@ -33,11 +50,14 @@ export function ModelViewer({ src, alt = 'A 3D model', poster, className, style 
         );
     }
 
+    // Determine the source URL - either the objectUrl (for File objects) or the src string
+    const sourceUrl = objectUrl || (typeof src === 'string' ? src : '');
+    
     return (
         <div ref={containerRef} className={className} style={style}>
             {/* @ts-ignore */}
             <model-viewer
-                src={src}
+                src={sourceUrl}
                 alt={alt}
                 poster={poster}
                 auto-rotate

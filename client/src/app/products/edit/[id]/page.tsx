@@ -581,9 +581,10 @@ export default function EditProductPage() {
                                                 <Label style={{ color: COLORS.gray }}>AR Model Preview</Label>
                                                 <div className="h-64 mt-2 border rounded-lg overflow-hidden">
                                                     {arAssetFile ? (
-                                                        <div className="flex items-center justify-center h-full bg-gray-50">
-                                                            <p className="text-sm text-gray-500">Preview will be available after saving</p>
-                                                        </div>
+                                                        <ModelViewer 
+                                                            src={arAssetFile} 
+                                                            className="w-full h-full" 
+                                                        />
                                                     ) : product?.ar_asset_url ? (
                                                         <ModelViewer 
                                                             src={product.ar_asset_url} 
