@@ -226,13 +226,6 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                                 color={COLORS.primary}
                             />
                             <PerformanceMetric
-                                icon={<ShoppingCart size={18} style={{ color: COLORS.success }} />}
-                                label="Conversion Rate"
-                                value={`${analyticsData.orderConversionRate || 0}%`}
-                                change={analyticsData.conversionRateGrowth || 0}
-                                color={COLORS.success}
-                            />
-                            <PerformanceMetric
                                 icon={<Package size={18} style={{ color: COLORS.gold }} />}
                                 label="Total Products"
                                 value={totalProducts.toLocaleString()}

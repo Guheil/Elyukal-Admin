@@ -6,6 +6,8 @@ import Link from 'next/link';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
+import logoImage from '../assets/img/logo.png';
 import {
     Eye, EyeOff, MapPin, ShoppingBag, ShieldCheck, Mail, Lock,
     ChevronRight, CheckCircle2, Activity, Settings, DollarSign, Users,
@@ -135,10 +137,16 @@ export default function AdminLoginPage() {
 
                 <div className="relative z-10">
                     <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 duration-300">
-                            <ShoppingBag className="h-7 w-7" style={{ color: COLORS.primary }} />
+                        <div className="w-10 h-10 bg-transparent rounded-full flex items-center justify-center  shadow-lg">
+                            <Image
+                                src={logoImage}
+                                alt="Shopping Bag"
+                                width={120} 
+                                height={120} 
+                                className="rounded-full object-cover" 
+                            />
                         </div>
-                        <h1 className="text-2xl font-bold tracking-wider" style={{ fontFamily: FONTS.bold }}>PRODUKTO ELYU-KAL</h1>
+                        <h1 className="text-2xl font-bold tracking-wider" style={{ fontFamily: FONTS.bold }}>PRODUKTO ELYUKAL</h1>
                     </div>
 
                     <div className="mt-4 ml-1 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"

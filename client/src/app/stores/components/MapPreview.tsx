@@ -60,7 +60,7 @@ export default function MapPreview({ latitude, longitude, onCoordinatesChange }:
   };
 
   return (
-    <div className="w-full h-120 rounded-lg overflow-hidden border">
+    <div className="w-full h-full rounded-lg overflow-hidden border">
       <MapContainer
         center={position}
         zoom={13}

@@ -86,13 +86,24 @@ export default function StoresPage() {
     };
 
     const handleEdit = (storeId: string) => {
-        // This will be implemented later
-        console.log('Edit store:', storeId);
+        router.push(`/stores/edit/${storeId}`);
     };
 
-    const handleDelete = (storeId: string) => {
-        // This will be implemented later
-        console.log('Delete store:', storeId);
+    const handleDelete = async (storeId: string) => {
+        if (window.confirm('Are you sure you want to delete this store? This action cannot be undone.')) {
+            try {
+                const { deleteStore } = await import('../api/storeService');
+                await deleteStore(storeId);
+                // Refresh the stores list
+                const response = await fetchStores();
+                if (response && Array.isArray(response)) {
+                    setStores(response);
+                }
+            } catch (error) {
+                console.error('Error deleting store:', error);
+                alert('Error deleting store. Please try again.');
+            }
+        }
     };
 
     const renderRatingStars = (rating: number) => {

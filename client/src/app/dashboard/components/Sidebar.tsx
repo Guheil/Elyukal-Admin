@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
+import Image from 'next/image';
+import logoImage from '../../assets/img/logo.png';
 import NavItem from './NavItem';
 import { useRouter } from 'next/navigation'; // Changed from next/router to next/navigation
 
@@ -70,8 +72,14 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             <div className="flex flex-col h-full">
                 <div className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-6'} h-20`}>
                     <div className="flex items-center space-x-2">
-                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
-                            <ShoppingBag className="h-6 w-6" style={{ color: COLORS.primary }} />
+                        <div className="w-10 h-10 bg-transparent rounded-full flex items-center justify-center  shadow-lg">
+                            <Image
+                                src={logoImage} 
+                                alt="Shopping Bag"
+                                width={40} 
+                                height={40} 
+                                className="rounded-full object-cover" 
+                            />
                         </div>
                         {!isCollapsed && (
                             <h1 className="text-lg font-bold tracking-wider text-white" style={{ fontFamily: FONTS.bold }}>

@@ -314,7 +314,7 @@ export default function AddStorePage() {
                     </div>
 
                     {/* Map Preview */}
-                    <div className="mt-6">
+                    <div className="h-[500px]">
                       <Label style={{ color: COLORS.gray }}>Map Preview</Label>
                       <MapPreview latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} />
                     </div>
