@@ -13,6 +13,8 @@ import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
 import { Search, Filter, ArrowUpDown, Edit, Trash2, Mail, User as UserIcon, Calendar, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchUsers, User } from '../api/userService';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { FeedbackModal } from '@/components/ui/feedback-modal';
 
 export default function UsersPage() {
     const { user } = useAuth();

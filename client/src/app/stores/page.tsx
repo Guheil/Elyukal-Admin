@@ -13,6 +13,7 @@ import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
 import { Search, Filter, ArrowUpDown, Edit, Trash2, Star, MapPin, Phone, Clock, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchStores, Store } from '../api/storeService';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 
 export default function StoresPage() {
     const { user } = useAuth();
@@ -25,6 +26,8 @@ export default function StoresPage() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedType, setSelectedType] = useState('all');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [storeToDelete, setStoreToDelete] = useState<string | null>(null);
     const storesPerPage = 8;
 
     useEffect(() => {
@@ -89,21 +92,37 @@ export default function StoresPage() {
         router.push(`/stores/edit/${storeId}`);
     };
 
-    const handleDelete = async (storeId: string) => {
-        if (window.confirm('Are you sure you want to delete this store? This action cannot be undone.')) {
+    const handleDelete = (storeId: string) => {
+        setStoreToDelete(storeId);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (storeToDelete) {
             try {
                 const { deleteStore } = await import('../api/storeService');
-                await deleteStore(storeId);
+                await deleteStore(storeToDelete);
                 // Refresh the stores list
                 const response = await fetchStores();
                 if (response && Array.isArray(response)) {
                     setStores(response);
                 }
+                // Close the modal
+                setIsDeleteModalOpen(false);
+                setStoreToDelete(null);
             } catch (error) {
                 console.error('Error deleting store:', error);
                 alert('Error deleting store. Please try again.');
+                // Close the modal even on error
+                setIsDeleteModalOpen(false);
+                setStoreToDelete(null);
             }
         }
+    };
+
+    const cancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setStoreToDelete(null);
     };
 
     const renderRatingStars = (rating: number) => {
@@ -373,6 +392,16 @@ export default function StoresPage() {
                     </div>
                 </main>
             </div>
+            {/* Confirmation Modal for Store Deletion */}
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={cancelDelete}
+                title="Delete Store"
+                description="Are you sure you want to delete this store? This action cannot be undone."
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                onConfirm={confirmDelete}
+            />
         </div>
     );
 }
