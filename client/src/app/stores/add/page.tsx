@@ -6,16 +6,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Upload, ArrowLeft, MapPin } from 'lucide-react';
-import MapPreview from '../components/MapPreview';
 import Sidebar from '../../dashboard/components/Sidebar';
 import Header from '../../dashboard/components/Header';
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
+import { FeedbackModal } from '@/components/ui/feedback-modal';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import MapPreview from '../components/MapPreview'; // Import MapPreview component
 import {
   Form,
   FormControl,
@@ -46,18 +47,18 @@ export default function AddStorePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [storeImage, setStoreImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-
-  // Sample store types (would come from API in a real implementation)
   const storeTypes = [
     'Marketplace',
     'Agri-Tourism Center',
     'Local Crafts Shop',
     'Food Stall',
     'Souvenir Shop',
-    'Farm',
-    'Restaurant',
-    'Specialty Store',
   ];
+  // Modal state
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalDescription, setModalDescription] = useState('');
 
   const form = useForm<StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
@@ -89,28 +90,49 @@ export default function AddStorePage() {
     setImagePreviewUrl(null);
   };
 
-  const handleCoordinatesChange = (lat: number, lng: number) => {
-    form.setValue('latitude', lat);
-    form.setValue('longitude', lng);
-  };
-
   const onSubmit = async (data: StoreFormValues) => {
     setIsSubmitting(true);
 
     try {
-      console.log('Form data:', data);
-      console.log('Store image:', storeImage);
+      // Create FormData object to send files and form data
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value.toString());
+      });
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (storeImage) {
+        formData.append('store_image', storeImage);
+      }
 
-      alert('Store added successfully! (Frontend only)');
-      router.push('/stores');
+      // Import the addStore function
+      const { addStore } = await import('../../api/storeService');
+
+      // Send the data to the backend
+      const response = await addStore(formData);
+
+      // Show success message with modal
+      setModalType('success');
+      setModalTitle('Store Added Successfully');
+      setModalDescription('Your store has been added to the marketplace.');
+      setShowFeedbackModal(true);
     } catch (error) {
       console.error('Error adding store:', error);
-      alert('Error adding store. Please try again.');
+
+
+      setModalType('error');
+      setModalTitle('Error Adding Store');
+      setModalDescription('There was a problem adding your store. Please try again.');
+      setShowFeedbackModal(true);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle modal close and redirect if success
+  const handleModalClose = () => {
+    setShowFeedbackModal(false);
+    if (modalType === 'success') {
+      router.push('/stores');
     }
   };
 
@@ -291,16 +313,10 @@ export default function AddStorePage() {
                       </p>
                     </div>
 
-                    <div className="space-y-3">
-                      <Label style={{ color: COLORS.gray }}>Location Preview</Label>
-                      <MapPreview
-                        latitude={parseFloat(form.watch('latitude') as unknown as string) || 16.6157}
-                        longitude={parseFloat(form.watch('longitude') as unknown as string) || 120.3210}
-                        onCoordinatesChange={handleCoordinatesChange}
-                      />
-                      <p className="text-xs" style={{ color: COLORS.gray }}>
-                        Click on the map to set coordinates or enter them manually above
-                      </p>
+                    {/* Map Preview */}
+                    <div className="mt-6">
+                      <Label style={{ color: COLORS.gray }}>Map Preview</Label>
+                      <MapPreview latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} />
                     </div>
 
                     <div className="flex justify-end">
@@ -323,6 +339,16 @@ export default function AddStorePage() {
           </div>
         </main>
       </div>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={handleModalClose}
+        title={modalTitle}
+        description={modalDescription}
+        type={modalType}
+        actionLabel={modalType === 'success' ? 'Go to Stores' : 'Try Again'}
+      />
     </div>
   );
 }

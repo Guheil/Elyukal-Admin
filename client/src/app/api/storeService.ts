@@ -1,7 +1,7 @@
 // src/app/api/storeService.ts
 
 /**
- * Service for fetching store data from the API
+ * Service for fetching and managing store data from the API
  */
 
 export interface Store {
@@ -39,5 +39,104 @@ export const fetchStores = async (): Promise<Store[]> => {
     } catch (error) {
         console.error('Stores fetch error:', error);
         return [];
+    }
+};
+
+/**
+ * Add a new store
+ */
+export const addStore = async (formData: FormData) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/add_store`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error adding store: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store add error:', error);
+        throw error;
+    }
+};
+
+/**
+ * Fetch a store by ID
+ */
+export const fetchStoreById = async (storeId: string) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/fetch_store/${storeId}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching store: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store fetch error:', error);
+        throw error;
+    }
+};
+
+/**
+ * Update an existing store
+ */
+export const updateStore = async (storeId: string, formData: FormData) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/update_store/${storeId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error updating store: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store update error:', error);
+        throw error;
+    }
+};
+
+/**
+ * Delete a store
+ */
+export const deleteStore = async (storeId: string) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/delete_store/${storeId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error deleting store: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store delete error:', error);
+        throw error;
     }
 };

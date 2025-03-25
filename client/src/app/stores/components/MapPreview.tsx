@@ -64,7 +64,7 @@ export default function MapPreview({ latitude, longitude, onCoordinatesChange }:
       <MapContainer
         center={position}
         zoom={13}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', zIndex: 0}}
         zoomControl={true}
       >
         <TileLayer
