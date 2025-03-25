@@ -79,7 +79,7 @@ async def add_store(
             raise HTTPException(status_code=500, detail="Failed to add store")
         
         # Log admin activity for adding store
-        await log_admin_activity(current_user, "added", name)
+        await log_admin_activity(current_user, "added", name, "Store")
         
         logger.info(f"Successfully added store with ID: {store_id}")
         return {"message": "Store added successfully", "store": response.data[0]}
@@ -186,7 +186,7 @@ async def update_store(
             raise HTTPException(status_code=500, detail="Failed to update store")
         
         # Log admin activity for updating store
-        await log_admin_activity(current_user, "edited", name)
+        await log_admin_activity(current_user, "edited", name, "Store")
         
         logger.info(f"Successfully updated store with ID: {store_id}")
         return {"message": "Store updated successfully", "store": response.data[0]}
@@ -222,7 +222,7 @@ async def delete_store(store_id: str = Path(...), current_user: dict = Depends(g
             raise HTTPException(status_code=500, detail="Failed to delete store")
         
         # Log admin activity for deleting store
-        await log_admin_activity(current_user, "deleted", store_name)
+        await log_admin_activity(current_user, "deleted", store_name, "Store")
         
         logger.info(f"Successfully deleted store with ID: {store_id}")
         return {"message": "Store deleted successfully"}

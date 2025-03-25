@@ -5,7 +5,12 @@ from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
-async def log_admin_activity(admin_user: dict, activity_type: str, object_name: str, object_type: str = "Product"):
+async def log_admin_activity(
+    admin_user: dict, 
+    activity_type: str, 
+    object_name: str, 
+    object_type: str = "Product"
+):
     """
     Logs admin activities to the admin_activities table.
     
@@ -13,9 +18,19 @@ async def log_admin_activity(admin_user: dict, activity_type: str, object_name: 
         admin_user: The admin user performing the action (from get_current_user)
         activity_type: The type of activity ('added', 'edited', 'deleted')
         object_name: The name of the object being acted upon
-        object_type: The type of object (default is "Product")
+        object_type: The type of object ('Product' or 'Store', defaults to 'Product')
     """
     try:
+        # Validate activity_type against enum
+        valid_activities = ['added', 'edited', 'deleted']
+        if activity_type not in valid_activities:
+            raise ValueError(f"Invalid activity_type. Must be one of {valid_activities}")
+
+        # Validate object_type
+        valid_object_types = ['Product', 'Store']
+        if object_type not in valid_object_types:
+            raise ValueError(f"Invalid object_type. Must be one of {valid_object_types}")
+
         # Extract admin information
         admin_id = admin_user.get("id")
         first_name = admin_user.get("first_name", "")
@@ -27,11 +42,11 @@ async def log_admin_activity(admin_user: dict, activity_type: str, object_name: 
             admin_name = admin_user["email"]
         
         # Format the object field
-        object_field = f"{object_type} - {object_name}"
+        object_field = f"{object_type}: {object_name}"
         
         # Log to admin_activities table
         activity_data = {
-            "admin_id": admin_id,
+            "admin_id": str(admin_id),  # Convert UUID to string for Supabase
             "admin_name": admin_name,
             "activity": activity_type,
             "object": object_field
@@ -46,3 +61,4 @@ async def log_admin_activity(admin_user: dict, activity_type: str, object_name: 
             
     except Exception as e:
         logger.error(f"Error logging admin activity: {str(e)}")
+        raise  # Re-raise the exception to be handled by the caller if needed
