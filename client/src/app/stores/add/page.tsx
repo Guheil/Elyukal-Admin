@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useCallback } from'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -81,6 +82,10 @@ export default function AddStorePage() {
       setImagePreviewUrl(previewUrl);
     }
   };
+  const handleCoordinatesChange = useCallback((lat: number, lng: number) => {
+    form.setValue('latitude', lat, { shouldValidate: true });
+    form.setValue('longitude', lng, { shouldValidate: true });
+  }, [form]);
 
   const removeImage = () => {
     if (imagePreviewUrl) {
@@ -316,7 +321,11 @@ export default function AddStorePage() {
                     {/* Map Preview */}
                     <div className="h-[500px]">
                       <Label style={{ color: COLORS.gray }}>Map Preview</Label>
-                      <MapPreview latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} />
+                      <MapPreview 
+                        latitude={form.watch('latitude')} 
+                        longitude={form.watch('longitude')} 
+                        onCoordinatesChange={handleCoordinatesChange}
+                      />
                     </div>
 
                     <div className="flex justify-end">

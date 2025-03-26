@@ -452,13 +452,13 @@ export default function EditStorePage() {
                     </div>
 
                     <div className="flex justify-end gap-4 mt-6">
-                      <Button
+                      {/* <Button
                         type="button"
                         variant="outline"
                         onClick={() => router.push('/stores')}
                       >
                         Cancel
-                      </Button>
+                      </Button> */}
                       <Button
                         type="submit"
                         disabled={isSubmitting}
