@@ -6,7 +6,8 @@ import { BASE_URL } from '@/config';
 import { PerformanceMetric } from './PerformanceMetric';
 import { COLORS } from '../../constants/colors';
 import { Eye, ShoppingCart, Users, TrendingUp, CheckCircle2, AlertTriangle, Activity, Package, Star } from 'lucide-react';
-import { fetchPopularProducts, Product } from '../../api/productService';
+import { fetchPopularProducts, fetchMostViewedProducts, Product } from '../../api/productService';
+import { getTotalNumberOfUsers } from '@/app/api/userService';
 
 interface OverviewTabProps {
     analyticsData: any;
@@ -14,7 +15,7 @@ interface OverviewTabProps {
 
 export default function OverviewTab({ analyticsData }: OverviewTabProps) {
     const [totalProducts, setTotalProducts] = useState<number>(0);
-
+    const [totalUsers, setTotalUsers] = useState<number>(0);
     const [popularProducts, setPopularProducts] = useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
 
@@ -27,6 +28,9 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                 const countData = await countResponse.json();
                 setTotalProducts(countData.total_products);
 
+                const userTotalResponse = await getTotalNumberOfUsers();
+                setTotalUsers(userTotalResponse.total_users);
+
                 // Fetch total product views
                 const viewsResponse = await fetch(`${BASE_URL}/get_total_number_of_product_views`);
                 const viewsData = await viewsResponse.json();
@@ -35,14 +39,10 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                     analyticsData.productViews = viewsData.total_product_views;
                 }
 
-                // Fetch popular products
-                const productsResponse = await fetchPopularProducts();
+                // Fetch most viewed products
+                const productsResponse = await fetchMostViewedProducts();
                 if (productsResponse && productsResponse.products) {
-                    // Sort by total_reviews in descending order and take top 5
-                    const sortedProducts = [...productsResponse.products]
-                        .sort((a, b) => b.total_reviews - a.total_reviews)
-                        .slice(0, 5);
-                    setPopularProducts(sortedProducts);
+                    setPopularProducts(productsResponse.products);
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -85,44 +85,45 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
         }
     };
 
-    // Sample admin activities data
-    const adminActivities = [
-        {
-            id: 1,
-            admin: "John Smith",
-            activity: "edited",
-            object: "Summer Collection Store",
-            datetime: "Today, 10:45 AM"
-        },
-        {
-            id: 2,
-            admin: "Sarah Johnson",
-            activity: "added",
-            object: "Bacnotan Honey",
-            datetime: "Today, 9:30 AM"
-        },
-        {
-            id: 3,
-            admin: "Michael Brown",
-            activity: "deleted",
-            object: "Inabel",
-            datetime: "Yesterday, 4:15 PM"
-        },
-        {
-            id: 4,
-            admin: "Emma Wilson",
-            activity: "edited",
-            object: "Surf Miniature Figurine",
-            datetime: "Yesterday, 2:20 PM"
-        },
-        {
-            id: 5,
-            admin: "David Lee",
-            activity: "added",
-            object: "Basi Wine",
-            datetime: "Mar 22, 2025, 11:05 AM"
-        }
-    ];
+    // State for admin activities
+    const [adminActivities, setAdminActivities] = useState<Array<{
+        id: string;
+        admin_name: string;
+        activity: string;
+        object: string;
+        created_at: string;
+    }>>([]);
+    const [loadingActivities, setLoadingActivities] = useState(true);
+
+    // Fetch admin activities
+    useEffect(() => {
+        const fetchAdminActivities = async () => {
+            setLoadingActivities(true);
+            try {
+                // Import the fetchActivities function from activityService
+                const { fetchActivities } = await import('../../api/activityService');
+                const activities = await fetchActivities();
+                
+                // Take only the 5 most recent activities
+                const recentActivities = activities.slice(0, 5).map(activity => ({
+                    id: activity.id,
+                    admin_name: activity.admin_name,
+                    activity: activity.activity,
+                    object: activity.object,
+                    created_at: activity.created_at
+                }));
+                
+                setAdminActivities(recentActivities);
+            } catch (error) {
+                console.error('Error fetching admin activities:', error);
+                setAdminActivities([]);
+            } finally {
+                setLoadingActivities(false);
+            }
+        };
+
+        fetchAdminActivities();
+    }, []);
 
     // Function to get activity badge color
     const getActivityBadge = (activity: string) => {
@@ -138,15 +139,15 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Top Selling Products */}
-                <Card className="col-span-1 lg:col-span-2">
+                <Card className="col-span-1 lg:col-span-2 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                            <CardTitle style={{ color: COLORS.accent }}>Most Reviewed Products</CardTitle>
+                            <CardTitle style={{ color: COLORS.accent }}>Most Viewed Products</CardTitle>
                             <Button variant="ghost" size="sm" className="text-sm" style={{ color: COLORS.primary }}>
-
+                                View All
                             </Button>
                         </div>
-                        <CardDescription>Products with the highest number of customer reviews</CardDescription>
+                        <CardDescription>Products with the highest number of customer views</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {loadingProducts ? (
@@ -164,7 +165,7 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                                         <th className="pb-3 font-medium">Product</th>
                                         <th className="pb-3 font-medium">Category</th>
                                         <th className="pb-3 font-medium">Rating</th>
-                                        <th className="pb-3 font-medium text-right">Reviews</th>
+                                        <th className="pb-3 font-medium text-right">Views</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -200,7 +201,7 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                                                 {renderRatingStars(product.average_rating)}
                                             </td>
                                             <td className="py-3 text-right font-medium">
-                                                {product.total_reviews}
+                                                {product.views || 0}
                                             </td>
                                         </tr>
                                     ))}
@@ -241,8 +242,8 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                             />
                             <PerformanceMetric
                                 icon={<Users size={18} style={{ color: COLORS.gradient.middle }} />}
-                                label="Active Users"
-                                value={analyticsData.totalAdminUsers?.toString() || '0'}
+                                label="Total Users"
+                                value={totalUsers.toLocaleString() || '0'}
                                 change={analyticsData.usersGrowth || 0}
                                 color={COLORS.gradient.middle}
                             />
@@ -264,43 +265,67 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                             <CardTitle style={{ color: COLORS.accent }}>Recent Admin Activities</CardTitle>
-                            <Button variant="ghost" size="sm" className="text-sm" style={{ color: COLORS.primary }}>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-sm" 
+                                style={{ color: COLORS.primary }}
+                                onClick={() => window.location.href = '/activity'}
+                            >
                                 View All Activities
                             </Button>
                         </div>
                         <CardDescription>Latest admin actions in the system</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <table className="w-full table-fixed">
-                            <thead>
-                                <tr className="text-left text-sm" style={{ color: COLORS.gray }}>
-                                    <th className="pb-3 font-medium w-1/4">Admin</th>
-                                    <th className="pb-3 font-medium w-1/6">Activity</th>
-                                    <th className="pb-3 font-medium w-1/3">Object</th>
-                                    <th className="pb-3 font-medium w-1/4">Date & Time</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {adminActivities.map((activity) => {
-                                    const activityStyles = getActivityBadge(activity.activity);
-                                    return (
-                                        <tr key={activity.id} className="h-16">
-                                            <td className="py-3 font-medium" style={{ color: COLORS.accent }}>{activity.admin}</td>
-                                            <td className="py-3">
-                                                <Badge
-                                                    className="rounded-full px-2 py-1 text-xs font-normal"
-                                                    style={{ backgroundColor: activityStyles.bg, color: activityStyles.text }}
-                                                >
-                                                    {activity.activity}
-                                                </Badge>
-                                            </td>
-                                            <td className="py-3 truncate">{activity.object}</td>
-                                            <td className="py-3 text-sm" style={{ color: COLORS.gray }}>{activity.datetime}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                        {loadingActivities ? (
+                            <div className="flex justify-center items-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: COLORS.primary }}></div>
+                            </div>
+                        ) : adminActivities.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-sm" style={{ color: COLORS.gray }}>No admin activities found</p>
+                            </div>
+                        ) : (
+                            <table className="w-full table-fixed">
+                                <thead>
+                                    <tr className="text-left text-sm" style={{ color: COLORS.gray }}>
+                                        <th className="pb-3 font-medium w-1/4">Admin</th>
+                                        <th className="pb-3 font-medium w-1/6">Activity</th>
+                                        <th className="pb-3 font-medium w-1/3">Object</th>
+                                        <th className="pb-3 font-medium w-1/4">Date & Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {adminActivities.map((activity) => {
+                                        const activityStyles = getActivityBadge(activity.activity);
+                                        return (
+                                            <tr key={activity.id} className="h-16">
+                                                <td className="py-3 font-medium" style={{ color: COLORS.accent }}>{activity.admin_name}</td>
+                                                <td className="py-3">
+                                                    <Badge
+                                                        className="rounded-full px-2 py-1 text-xs font-normal"
+                                                        style={{ backgroundColor: activityStyles.bg, color: activityStyles.text }}
+                                                    >
+                                                        {activity.activity}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3 truncate">{activity.object}</td>
+                                                <td className="py-3 text-sm" style={{ color: COLORS.gray }}>
+                                                    {new Date(activity.created_at).toLocaleString('en-US', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
                     </CardContent>
                 </Card>
 

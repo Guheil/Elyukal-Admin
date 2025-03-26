@@ -20,7 +20,7 @@ export const fetchUsers = async (): Promise<{ users: User[] }> => {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         const response = await fetch(`${apiUrl}/fetch_users`, {
             method: 'GET',
-            credentials: 'include', // Include cookies for session authentication
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -58,6 +58,31 @@ export const fetchUserByEmail = async (email: string): Promise<{ user: User }> =
         return await response.json();
     } catch (error) {
         console.error('User fetch error:', error);
+        throw error;
+    }
+};
+
+/**
+ * Fetch total number of users
+ */
+export const getTotalNumberOfUsers = async (): Promise<{ total_users: number }> => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/get_total_number_of_users`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching total users: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Total users fetch error:', error);
         throw error;
     }
 };

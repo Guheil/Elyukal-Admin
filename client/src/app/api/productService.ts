@@ -5,6 +5,7 @@
  */
 
 export interface Product {
+    views: number;
     id: number;
     name: string;
     description: string;
@@ -125,6 +126,31 @@ export const fetchPopularProducts = async () => {
         return await response.json();
     } catch (error) {
         console.error('Popular products fetch error:', error);
+        return { products: [] };
+    }
+};
+
+/**
+ * Fetch most viewed products
+ */
+export const fetchMostViewedProducts = async () => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/fetch_most_viewed_products`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching most viewed products: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Most viewed products fetch error:', error);
         return { products: [] };
     }
 };
