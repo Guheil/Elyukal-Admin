@@ -8,6 +8,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from "@/components/ui/modal";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
@@ -29,6 +31,8 @@ export default function ProductsPage() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<number | null>(null);
     const productsPerPage = 8;
 
     useEffect(() => {
@@ -98,8 +102,36 @@ export default function ProductsPage() {
     };
 
     const handleDelete = (productId: number) => {
-        // This will be implemented later
-        console.log('Delete product:', productId);
+        setProductToDelete(productId);
+        setIsDeleteModalOpen(true);
+    };
+    
+    const confirmDelete = async () => {
+        if (productToDelete) {
+            try {
+                const { deleteProduct } = await import('../api/productService');
+                await deleteProduct(productToDelete);
+                // Refresh the products list
+                const response = await fetchProducts();
+                if (response && response.products) {
+                    setProducts(response.products);
+                }
+                // Close the modal
+                setIsDeleteModalOpen(false);
+                setProductToDelete(null);
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                alert('Error deleting product. Please try again.');
+                // Close the modal even on error
+                setIsDeleteModalOpen(false);
+                setProductToDelete(null);
+            }
+        }
+    };
+    
+    const cancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setProductToDelete(null);
     };
 
     const handleViewReviews = (product: Product) => {
@@ -379,6 +411,17 @@ export default function ProductsPage() {
                                 productName={selectedProduct.name}
                             />
                         )}
+                        
+                        {/* Delete Confirmation Modal */}
+                        <ConfirmationModal
+                            isOpen={isDeleteModalOpen}
+                            onClose={() => setIsDeleteModalOpen(false)}
+                            title="Confirm Deletion"
+                            description="Are you sure you want to delete this product? This action cannot be undone."
+                            confirmLabel="Delete"
+                            cancelLabel="Cancel"
+                            onConfirm={confirmDelete}
+                        />
                     </div>
                 </main>
             </div>

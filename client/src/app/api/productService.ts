@@ -203,3 +203,29 @@ export const updateProduct = async (productId: number, formData: FormData) => {
         throw error; // Re-throw to handle in the component
     }
 };
+
+/**
+ * Delete a product by ID
+ */
+export const deleteProduct = async (productId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/delete_product/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error deleting product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Product delete error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};

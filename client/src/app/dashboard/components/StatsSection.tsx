@@ -76,7 +76,7 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
                 color={COLORS.success}
             />
             <StatsCard
-                title="Active Locations"
+                title="Active Stores"
                 value={totalStores.toLocaleString()}
                 description="Across La Union province"
                 icon={<MapPin />}
