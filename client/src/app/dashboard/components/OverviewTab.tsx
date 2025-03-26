@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +20,9 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
     const [loadingProducts, setLoadingProducts] = useState(true);
 
     useEffect(() => {
-        // Fetch total number of products and popular products on component mount
+        let isMounted = true; // Prevent race conditions
         const fetchData = async () => {
             try {
-                // Fetch total products count
                 const countResponse = await fetch(`${BASE_URL}/get_total_number_of_products`);
                 const countData = await countResponse.json();
                 setTotalProducts(countData.total_products);
@@ -31,27 +30,36 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                 const userTotalResponse = await getTotalNumberOfUsers();
                 setTotalUsers(userTotalResponse.total_users);
 
-                // Fetch total product views
                 const viewsResponse = await fetch(`${BASE_URL}/get_total_number_of_product_views`);
                 const viewsData = await viewsResponse.json();
-                // Update analyticsData with the total product views
+
                 if (analyticsData && typeof analyticsData === 'object') {
                     analyticsData.productViews = viewsData.total_product_views;
                 }
 
-                // Fetch most viewed products
                 const productsResponse = await fetchMostViewedProducts();
-                if (productsResponse && productsResponse.products) {
-                    setPopularProducts(productsResponse.products);
+                if (productsResponse && productsResponse.products && isMounted) {
+                    // Sort by views (descending), then by average_rating (descending) for ties
+                    const sortedProducts = [...productsResponse.products].sort((a, b) => {
+                        const viewsDiff = b.views - a.views; // Descending order for views
+                        if (viewsDiff !== 0) return viewsDiff;
+                        return parseFloat(b.average_rating) - parseFloat(a.average_rating); // Descending order for rating
+                    });
+                    console.log('Sorted products by views:', sortedProducts); // Debug log
+                    setPopularProducts(sortedProducts);
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
-                setLoadingProducts(false);
+                if (isMounted) setLoadingProducts(false);
             }
         };
 
         fetchData();
+
+        return () => {
+            isMounted = false; // Cleanup on unmount or dependency change
+        };
     }, [analyticsData]);
 
     // Function to render rating stars
@@ -97,14 +105,13 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
 
     // Fetch admin activities
     useEffect(() => {
+        let isMounted = true;
         const fetchAdminActivities = async () => {
             setLoadingActivities(true);
             try {
-                // Import the fetchActivities function from activityService
                 const { fetchActivities } = await import('../../api/activityService');
                 const activities = await fetchActivities();
-                
-                // Take only the 5 most recent activities
+
                 const recentActivities = activities.slice(0, 5).map(activity => ({
                     id: activity.id,
                     admin_name: activity.admin_name,
@@ -112,17 +119,21 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                     object: activity.object,
                     created_at: activity.created_at
                 }));
-                
-                setAdminActivities(recentActivities);
+
+                if (isMounted) setAdminActivities(recentActivities);
             } catch (error) {
                 console.error('Error fetching admin activities:', error);
-                setAdminActivities([]);
+                if (isMounted) setAdminActivities([]);
             } finally {
-                setLoadingActivities(false);
+                if (isMounted) setLoadingActivities(false);
             }
         };
 
         fetchAdminActivities();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     // Function to get activity badge color
@@ -135,10 +146,17 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
         }
     };
 
+    // Memoize top rated products to avoid re-sorting on every render
+    const topRatedProducts = useMemo(() => {
+        return [...popularProducts]
+            .sort((a, b) => parseFloat(b.average_rating) - parseFloat(a.average_rating))
+            .slice(0, 4);
+    }, [popularProducts]);
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Top Selling Products */}
+                {/* Most Viewed Products */}
                 <Card className="col-span-1 lg:col-span-2 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
@@ -201,7 +219,7 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                                                 {renderRatingStars(product.average_rating)}
                                             </td>
                                             <td className="py-3 text-right font-medium">
-                                                {product.views || 0}
+                                                {product.views}
                                             </td>
                                         </tr>
                                     ))}
@@ -265,10 +283,10 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                             <CardTitle style={{ color: COLORS.accent }}>Recent Admin Activities</CardTitle>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-sm"
                                 style={{ color: COLORS.primary }}
                                 onClick={() => window.location.href = '/activity'}
                             >
@@ -329,56 +347,76 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
                     </CardContent>
                 </Card>
 
-                {/* Notifications */}
+                {/* Top Rated Products */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle style={{ color: COLORS.accent }}>Notifications</CardTitle>
+                            <CardTitle style={{ color: COLORS.accent }}>Top Rated Products</CardTitle>
                             <Badge
                                 className="rounded-full px-2 py-1"
-                                style={{ backgroundColor: COLORS.primary, color: COLORS.white }}
+                                style={{ backgroundColor: COLORS.gold, color: 'black' }}
                             >
-                                {analyticsData.notifications?.length || 0} New
+                                <Star size={12} className="mr-1" /> Ratings
                             </Badge>
                         </div>
-                        <CardDescription>Recent system notifications</CardDescription>
+                        <CardDescription>Products with highest customer ratings</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {analyticsData.notifications.map((notification: any) => (
-                                <div key={notification.id} className="flex gap-3 pb-4 border-b border-gray-100">
-                                    <div className="pt-0.5">
-                                        {notification.type === 'alert' && (
-                                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.error}20` }}>
-                                                <AlertTriangle size={16} style={{ color: COLORS.error }} />
+                        {loadingProducts ? (
+                            <div className="flex justify-center items-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: COLORS.primary }}></div>
+                            </div>
+                        ) : topRatedProducts.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-sm" style={{ color: COLORS.gray }}>No products found</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {topRatedProducts.map((product) => (
+                                    <div key={product.id} className="flex gap-3 pb-4 border-b border-gray-100">
+                                        <div className="pt-0.5">
+                                            <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                                                {product.image_urls && product.image_urls.length > 0 ? (
+                                                    <img
+                                                        src={product.image_urls[0]}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = '/placeholder.png';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Package size={16} style={{ color: COLORS.gray }} />
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                        {notification.type === 'success' && (
-                                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.success}20` }}>
-                                                <CheckCircle2 size={16} style={{ color: COLORS.success }} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start">
+                                                <p className="text-sm font-medium" style={{ color: COLORS.accent }}>{product.name}</p>
+                                                <Badge variant="outline" className="text-xs font-normal rounded-full" style={{ borderColor: COLORS.lightgray }}>
+                                                    {product.category}
+                                                </Badge>
                                             </div>
-                                        )}
-                                        {notification.type === 'info' && (
-                                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.primary}20` }}>
-                                                <Activity size={16} style={{ color: COLORS.primary }} />
+                                            <div className="flex justify-between items-center mt-1">
+                                                {renderRatingStars(product.average_rating)}
+                                                <span className="text-xs" style={{ color: COLORS.gray }}>{product.total_reviews} reviews</span>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium" style={{ color: COLORS.accent }}>{notification.message}</p>
-                                        <p className="text-xs" style={{ color: COLORS.gray }}>{notification.time}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                     <CardFooter>
                         <Button
                             variant="ghost"
                             className="w-full text-sm"
                             style={{ color: COLORS.primary }}
+                            onClick={() => window.location.href = '/products'}
                         >
-                            View All Notifications
+                            View All Products
                         </Button>
                     </CardFooter>
                 </Card>
