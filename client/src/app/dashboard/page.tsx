@@ -5,6 +5,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import StatsSection from './components/StatsSection';
 import OverviewTab from './components/OverviewTab';
+import ProductsTab from './components/ProductsTab';
+import StoresTab from './components/StoresTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useAuth } from '@/context/AuthContext';
@@ -74,51 +76,10 @@ export default function Dashboard() {
                                 <OverviewTab analyticsData={analyticsData} />
                             </TabsContent>
                             <TabsContent value="products">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Products Management</CardTitle>
-                                        <CardDescription>Manage your product catalog</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-500">This tab will contain product management features...</p>
-                                    </CardContent>
-                                </Card>
+                                <ProductsTab analyticsData={analyticsData} />
                             </TabsContent>
                             <TabsContent value="stores">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Stores Management</CardTitle>
-                                        <CardDescription>Manage your store locations and inventory</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-500">This tab will contain store management features...</p>
-
-                                        <div className="mt-4">
-                                            <h3 className="text-sm font-medium mb-2">Store Statistics</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                                <Card className="p-4">
-                                                    <h4 className="text-sm font-medium mb-1">Stores with Most Products</h4>
-                                                    <div className="py-6 border border-dashed rounded-md bg-slate-50 text-center">
-                                                        <p className="text-sm text-gray-500">No data available</p>
-                                                    </div>
-                                                </Card>
-                                                <Card className="p-4">
-                                                    <h4 className="text-sm font-medium mb-1">Top Performing Stores</h4>
-                                                    <div className="py-6 border border-dashed rounded-md bg-slate-50 text-center">
-                                                        <p className="text-sm text-gray-500">No data available</p>
-                                                    </div>
-                                                </Card>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-4">
-                                            <h3 className="text-sm font-medium mb-2">All Stores</h3>
-                                            <div className="py-8 border border-dashed rounded-md bg-slate-50 text-center">
-                                                <p className="text-sm text-gray-500">No store data available</p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                <StoresTab analyticsData={analyticsData} />
                             </TabsContent>
                             {/* Similar for orders and customers */}
                         </Tabs>
