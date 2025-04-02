@@ -41,12 +41,26 @@ export default function AdminLoginPage() {
     useEffect(() => {
         setAnimateBackground(true);
         
-        // Fetch admin count
         const fetchAdminCount = async () => {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                const response = await fetch(`${apiUrl}/get_total_number_of_admin_users`);
-                const data = await response.json();
+                console.log('Fetching from:', `${apiUrl}/get_total_number_of_admin_users`);
+                const response = await fetch(`${apiUrl}/get_total_number_of_admin_users`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+        
+                console.log('Response status:', response.status);
+                const text = await response.text();
+                console.log('Raw response:', text);
+        
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+        
+                const data = JSON.parse(text);
                 setAdminCount(data.total_admin_users || 0);
             } catch (error) {
                 console.error('Error fetching admin count:', error);
