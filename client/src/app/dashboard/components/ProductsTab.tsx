@@ -195,18 +195,23 @@ export default function ProductsTab({ analyticsData }: ProductsTabProps) {
               </CardHeader>
               <CardContent>
                 <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={priceRangeData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" name="Products" fill={COLORS.primary} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                                      <ResponsiveContainer width="100%" height="100%">
+                                          <BarChart
+                                              data={priceRangeData}
+                                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                          >
+                                              <CartesianGrid strokeDasharray="3 3" />
+                                              <XAxis
+                                                  dataKey="name"
+                                                  tickFormatter={(tick) => `₱${tick}`} // ₱ sa X-axis
+                                              />
+                                              <YAxis />
+                                              <Tooltip
+                                                  formatter={(value, name, props) => [`${value} products`, `Price Range: ₱${props.payload.name}`]} 
+                                              />
+                                              <Bar dataKey="count" name="Products" fill={COLORS.primary} />
+                                          </BarChart>
+                                      </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
