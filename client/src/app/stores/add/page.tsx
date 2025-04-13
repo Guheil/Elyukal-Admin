@@ -54,9 +54,8 @@ export default function AddStorePage() {
     'Local Crafts Shop',
     'Food Stall',
     'Souvenir Shop',
-    'Farm & Vineyard'
   ];
-  // Modal state  
+  // Modal state
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [modalType, setModalType] = useState<'success' | 'error'>('success');
   const [modalTitle, setModalTitle] = useState('');
@@ -315,7 +314,7 @@ export default function AddStorePage() {
                         )}
                       </div>
                       <p className="text-xs" style={{ color: COLORS.gray }}>
-                        It is recommended to upload a high-quality image of the store.
+                        Upload a high-quality image of your store. This will be displayed on the marketplace.
                       </p>
                     </div>
 

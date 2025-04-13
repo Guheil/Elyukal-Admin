@@ -91,8 +91,7 @@ export default function UsersPage() {
     };
 
     const handleEdit = (email: string) => {
-        // This will be implemented later
-        console.log('Edit user:', email);
+        router.push(`/users/edit/${encodeURIComponent(email)}`);
     };
 
     const handleDelete = (email: string) => {

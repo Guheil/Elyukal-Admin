@@ -1,7 +1,5 @@
-// src/app/api/userService.ts
-
 /**
- * Service for fetching user data from the API
+ * Service for fetching and managing user data from the API
  */
 
 export interface User {
@@ -34,6 +32,32 @@ export const fetchUsers = async (): Promise<{ users: User[] }> => {
     } catch (error) {
         console.error('Users fetch error:', error);
         return { users: [] };
+    }
+};
+
+/**
+ * Update a user's information
+ */
+export const updateUser = async (email: string, userData: { first_name: string; last_name: string; email: string }): Promise<{ success: boolean }> => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/update_user/${email}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error updating user: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('User update error:', error);
+        throw error;
     }
 };
 

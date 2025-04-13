@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.db.database import supabase_client
+from pydantic import BaseModel, EmailStr
 import logging
 from typing import List
 from pydantic import BaseModel, EmailStr
@@ -16,6 +17,13 @@ class UserResponse(BaseModel):
     updated_at: str = None
 
 router = APIRouter(tags=["Users"])
+
+
+class UserUpdate(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+
 
 @router.get("/fetch_users")
 async def fetch_users():
@@ -88,6 +96,38 @@ async def get_total_number_of_users():
     except Exception as e:
         logger.exception(f"Error getting total user count: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.put("/update_user/{email}")
+async def update_user(email: str, user_data: UserUpdate):
+    """
+    Update a user's information by email.
+    This endpoint updates the user's first_name, last_name, and email in the database.
+    """
+    try:
+        # Check if the user exists
+        check_response = supabase_client.table("users").select("*").eq("email", email).execute()
+        if not check_response.data or len(check_response.data) == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update the user in the database
+        response = supabase_client.table("users").update({
+            "first_name": user_data.first_name,
+            "last_name": user_data.last_name,
+            "email": user_data.email,
+            "updated_at": "now()"
+        }).eq("email", email).execute()
+
+        if not response.data:
+            raise HTTPException(status_code=500, detail="Failed to update user")
+
+        logger.info(f"Updated user: {email}")
+        return {"success": True}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.exception(f"Error updating user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
 
 @router.get("/get_total_number_of_admin_users")
 async def get_total_number_of_admin_users():
