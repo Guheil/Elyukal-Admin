@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, LayoutDashboard, Package, Users, MapPin, BarChart3, Settings, LogOut, ChevronDown, Store, User, LucideSquareActivity } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,6 +9,7 @@ import Image from 'next/image';
 import logoImage from '../../assets/img/logo.png';
 import NavItem from './NavItem';
 import { useRouter } from 'next/navigation'; // Changed from next/router to next/navigation
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -18,6 +19,11 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     const router = useRouter();
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+    const showLogoutConfirmation = () => {
+        setIsLogoutModalOpen(true);
+    };
 
     const handleLogout = async () => {
         try {
@@ -62,6 +68,10 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             localStorage.removeItem('access_token');
             router.push('/login');
         }
+    };
+
+    const cancelLogout = () => {
+        setIsLogoutModalOpen(false);
     };
 
     return (
@@ -121,7 +131,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="text-white opacity-75 hover:opacity-100"
-                                onClick={handleLogout}
+                                onClick={showLogoutConfirmation}
                                 title="Logout"
                             >
                                 <LogOut className="h-5 w-5" />
@@ -147,7 +157,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="text-white opacity-75 hover:opacity-100"
-                                onClick={handleLogout}
+                                onClick={showLogoutConfirmation}
                             >
                                 <LogOut className="h-5 w-5" />
                             </Button>
@@ -162,6 +172,15 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                     <ChevronDown className={`h-4 w-4 transform transition-transform ${isCollapsed ? 'rotate-90' : '-rotate-90'}`} />
                 </button>
             </div>
+            <ConfirmationModal
+                isOpen={isLogoutModalOpen}
+                onClose={cancelLogout}
+                onConfirm={handleLogout}
+                title="Confirm Logout"
+                description="Are you sure you want to logout? You will need to login again to access the dashboard."
+                confirmLabel="Logout"
+                cancelLabel="Cancel"
+            />
         </div>
     );
 }
