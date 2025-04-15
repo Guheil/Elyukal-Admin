@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCallback } from'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MapPreview from '../components/MapPreview'; // Import MapPreview component
+import { fetchMunicipalities, Municipality } from '../../api/municipalityService';
 import {
   Form,
   FormControl,
@@ -37,6 +38,7 @@ const storeFormSchema = z.object({
   operating_hours: z.string().min(3, { message: 'Please enter valid operating hours' }).optional().or(z.literal('')),
   latitude: z.coerce.number().min(-90).max(90, { message: 'Latitude must be between -90 and 90' }),
   longitude: z.coerce.number().min(-180).max(180, { message: 'Longitude must be between -180 and 180' }),
+  town: z.string().optional(),
 });
 
 type StoreFormValues = z.infer<typeof storeFormSchema>;
@@ -60,6 +62,10 @@ export default function AddStorePage() {
   const [modalType, setModalType] = useState<'success' | 'error'>('success');
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
+  
+  // Municipalities data from API
+  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+  const [loadingMunicipalities, setLoadingMunicipalities] = useState(true);
 
   const form = useForm<StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
@@ -71,8 +77,28 @@ export default function AddStorePage() {
       operating_hours: '',
       latitude: 16.6157, // Default to La Union coordinates
       longitude: 120.3210,
+      town: '',
     },
   });
+  
+  // Fetch municipalities data when component mounts
+  useEffect(() => {
+    const loadMunicipalities = async () => {
+      setLoadingMunicipalities(true);
+      try {
+        const municipalitiesData = await fetchMunicipalities();
+        if (municipalitiesData && Array.isArray(municipalitiesData)) {
+          setMunicipalities(municipalitiesData);
+        }
+      } catch (error) {
+        console.error('Error loading municipalities:', error);
+      } finally {
+        setLoadingMunicipalities(false);
+      }
+    };
+
+    loadMunicipalities();
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -260,6 +286,33 @@ export default function AddStorePage() {
                             <FormLabel style={{ color: COLORS.gray }}>Longitude</FormLabel>
                             <FormControl>
                               <Input type="number" step="0.000001" placeholder="Enter longitude" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="town"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel style={{ color: COLORS.gray }}>Town/Municipality</FormLabel>
+                            <FormControl>
+                              <select
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                {...field}
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                disabled={loadingMunicipalities}
+                              >
+                                <option value="">{loadingMunicipalities ? 'Loading municipalities...' : 'Select a municipality'}</option>
+                                {municipalities.map((municipality) => (
+                                  <option key={municipality.id} value={municipality.id.toString()}>
+                                    {municipality.name}
+                                  </option>
+                                ))}
+                              </select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
