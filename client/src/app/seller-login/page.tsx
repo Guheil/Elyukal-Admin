@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
@@ -30,45 +29,29 @@ const formSchema = z.object({
     password: z.string().min(1, { message: "Password is required" }),
 });
 
-export default function AdminLoginPage() {
+export default function SellerLoginPage() {
     const router = useRouter();
     const { setUser, login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [animateBackground, setAnimateBackground] = useState(false);
-    const [adminCount, setAdminCount] = useState(0);
+    const [sellerCount, setSellerCount] = useState(0);
 
     useEffect(() => {
         setAnimateBackground(true);
         
-        const fetchAdminCount = async () => {
+        // This would be replaced with actual seller count API call when implemented
+        const fetchSellerCount = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                console.log('Fetching from:', `${apiUrl}/get_total_number_of_admin_users`);
-                const response = await fetch(`${apiUrl}/get_total_number_of_admin_users`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                });
-        
-                console.log('Response status:', response.status);
-                const text = await response.text();
-                console.log('Raw response:', text);
-        
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-        
-                const data = JSON.parse(text);
-                setAdminCount(data.total_admin_users || 0);
+                // Placeholder for actual API call
+                setSellerCount(25); // Example count
             } catch (error) {
-                console.error('Error fetching admin count:', error);
-                setAdminCount(0);
+                console.error('Error fetching seller count:', error);
+                setSellerCount(0);
             }
         };
         
-        fetchAdminCount();
+        fetchSellerCount();
     }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -82,12 +65,12 @@ export default function AdminLoginPage() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsLoading(true);
         try {
-            // Use the login function from AuthContext instead of making a direct API call
-            // This ensures consistency in how authentication is handled
+            // This would be replaced with seller-specific login logic
+            // For now, using the same login function but would be modified when API is ready
             await login(values.email, values.password);
             
             toast.success('Login successful!');
-            router.push('/dashboard');
+            router.push('/seller/dashboard'); // Would redirect to seller dashboard when implemented
         } catch (error: any) {
             console.error('Login error:', error);
             let errorMessage = 'Authentication failed. Please verify your credentials.';
@@ -151,7 +134,7 @@ export default function AdminLoginPage() {
 
                 <div className="relative z-10">
                     <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-transparent rounded-full flex items-center justify-center  shadow-lg">
+                        <div className="w-10 h-10 bg-transparent rounded-full flex items-center justify-center shadow-lg">
                             <Image
                                 src={logoImage}
                                 alt="Shopping Bag"
@@ -171,13 +154,13 @@ export default function AdminLoginPage() {
                             fontFamily: FONTS.semibold
                         }}>
                         <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Administrator Portal
+                        Seller Portal
                     </div>
                 </div>
 
                 <div className="space-y-8 relative z-10 max-w-lg">
                     <h2 className="text-4xl font-bold leading-tight" style={{ fontFamily: FONTS.bold }}>
-                        Admin Portal for <span
+                        Seller Portal for <span
                             className="relative"
                             style={{
                                 color: COLORS.gold,
@@ -188,34 +171,34 @@ export default function AdminLoginPage() {
                         </span>
                     </h2>
                     <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular, lineHeight: 1.6 }}>
-                        Manage La Union's local products and agri-tourism initiatives with advanced digital tools. Securely oversee product listings, user interactions, and analytics to boost local economic growth.
+                        Showcase and sell your La Union local products through our platform. Manage your product listings, track sales, and connect with customers across the region.
                     </p>
 
                     <div className="grid grid-cols-2 gap-4 pt-6">
                         <FeatureCard
                             icon={<ShoppingBag className="h-5 w-5" style={{ color: COLORS.gold }} />}
                             title="Product Management"
-                            description="Control product listings and AR assets"
+                            description="Manage your product listings easily"
                         />
                         <FeatureCard
                             icon={<Activity className="h-5 w-5" style={{ color: COLORS.gold }} />}
-                            title="Analytics"
-                            description="Track user engagement and sales"
+                            title="Sales Analytics"
+                            description="Track your sales performance"
                         />
                         <FeatureCard
                             icon={<MapPin className="h-5 w-5" style={{ color: COLORS.gold }} />}
-                            title="Geolocation Hub"
-                            description="Manage location-based services"
+                            title="Location Services"
+                            description="Highlight your store location"
                         />
                         <FeatureCard
-                            icon={<ShieldCheck className="h-5 w-5" style={{ color: COLORS.gold }} />}
-                            title="Security"
-                            description="Protect user and product data"
+                            icon={<DollarSign className="h-5 w-5" style={{ color: COLORS.gold }} />}
+                            title="Payment Processing"
+                            description="Secure transaction handling"
                         />
                     </div>
 
                     <div className="flex items-center gap-5 pt-4">
-                        <StatusIndicator label="System Status" status="All systems operational" active={true} />
+                        <StatusIndicator label="Platform Status" status="All systems operational" active={true} />
                         <StatusIndicator label="Security" status="Protected" active={true} />
                         <StatusIndicator label="Updates" status="Latest version" active={true} />
                     </div>
@@ -227,12 +210,12 @@ export default function AdminLoginPage() {
                             {[COLORS.gold, '#FF6B6B', '#48DBFB', '#1DD1A1'].map((color, index) => (
                                 <div key={index} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold"
                                     style={{ backgroundColor: color, zIndex: 4 - index }}>
-                                    {['AK', 'LM', 'TS', 'PD'][index]}
+                                    {['JS', 'LM', 'TS', 'PD'][index]}
                                 </div>
                             ))}
                         </div>
                         <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular }}>
-                            Join <span className="font-semibold">{adminCount} admins</span> currently active
+                            Join <span className="font-semibold">{sellerCount} sellers</span> currently active
                         </p>
                     </div>
 
@@ -261,9 +244,9 @@ export default function AdminLoginPage() {
                             </div>
                             <h1 className="text-2xl font-bold tracking-wider" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>PRODUKTO ELYU-KAL</h1>
                         </div>
-                        <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>Admin Login</h2>
+                        <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>Seller Login</h2>
                         <p style={{ color: COLORS.gray, fontFamily: FONTS.regular }} className="text-lg">
-                            Securely access the admin panel to manage La Union's local products.
+                            Access your seller account to manage your products and sales.
                         </p>
                     </div>
 
@@ -288,7 +271,7 @@ export default function AdminLoginPage() {
                                                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors group-focus-within:text-primary"
                                                             style={{ color: COLORS.gray }} />
                                                         <Input
-                                                            placeholder="admin@produktoelyu-kal.com"
+                                                            placeholder="seller@produktoelyu-kal.com"
                                                             className="pl-12 py-6 rounded-lg text-base border-2 transition-all focus:border-primary"
                                                             style={{
                                                                 backgroundColor: COLORS.lightgray,
@@ -332,7 +315,7 @@ export default function AdminLoginPage() {
                                                             style={{ color: COLORS.gray }} />
                                                         <Input
                                                             type={showPassword ? "text" : "password"}
-                                                            placeholder="Enter your admin password"
+                                                            placeholder="Enter your password"
                                                             className="pl-12 pr-12 py-6 rounded-lg text-base border-2 transition-all focus:border-primary"
                                                             style={{
                                                                 backgroundColor: COLORS.lightgray,
@@ -390,7 +373,7 @@ export default function AdminLoginPage() {
                                         disabled={isLoading}
                                     >
                                         <span className="relative z-10 flex items-center justify-center gap-2">
-                                            {isLoading ? 'Authenticating...' : 'Login to Admin Panel'}
+                                            {isLoading ? 'Authenticating...' : 'Login to Seller Portal'}
                                             <ChevronRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                                         </span>
                                         <span className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
@@ -403,8 +386,8 @@ export default function AdminLoginPage() {
                                         <div className="flex-1 h-px" style={{ backgroundColor: COLORS.lightgray }}></div>
                                     </div>
 
-                                    <div className="flex justify-center">
-                                        <Link href="/seller-login">
+                                    <div className="flex justify-center space-x-4">
+                                        <Link href="/login">
                                             <Button
                                                 type="button"
                                                 variant="outline"
@@ -415,9 +398,10 @@ export default function AdminLoginPage() {
                                                     fontFamily: FONTS.semibold,
                                                 }}
                                             >
-                                                Sign in as Seller
+                                                Sign in as Admin
                                             </Button>
                                         </Link>
+                                        
                                     </div>
                                 </form>
                             </Form>
@@ -426,8 +410,15 @@ export default function AdminLoginPage() {
 
                     <div className="mt-6 space-y-4">
                         <div className="text-center" style={{ color: COLORS.gray, fontFamily: FONTS.regular }}>
-                            Need help? Contact <span className="font-medium cursor-pointer hover:underline transition-colors"
-                                style={{ color: COLORS.primary, fontFamily: FONTS.semibold }}>Support Team</span>
+                            Don't have a seller account?{' '}
+                            <Link href="/seller-login/apply">
+                                <span
+                                    className="font-medium cursor-pointer hover:underline transition-colors"
+                                    style={{ color: COLORS.primary, fontFamily: FONTS.semibold }}
+                                >
+                                    Apply Now
+                                </span>
+                            </Link>
                         </div>
 
                         <div className="flex items-center justify-center gap-2 pt-2 text-center text-sm px-8"
@@ -443,7 +434,7 @@ export default function AdminLoginPage() {
                                 color: COLORS.gray,
                                 fontFamily: FONTS.regular
                             }}>
-                            Last successful login: Today, 09:45 AM from La Union
+                            Last successful login: Today, 11:23 AM from La Union
                         </div>
                     </div>
                 </div>
