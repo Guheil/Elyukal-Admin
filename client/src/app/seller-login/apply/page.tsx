@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import logoImage from '../../assets/img/logo.png';
-import heroImage from '../../assets/img/logo.png'; 
+import heroImage from '../../assets/img/elyu-capitol.jpg'; 
 import {
     Eye, EyeOff, ArrowLeft, Upload, X, FileText, CheckCircle2, AlertTriangle
 } from 'lucide-react';
@@ -228,12 +228,7 @@ export default function SellerApplicationPage() {
                             Back to Login
                         </Button>
                         <Link href="/seller-login">
-                            <Button
-                                className="text-sm"
-                                style={{ backgroundColor: COLORS.primary, color: 'white', fontFamily: FONTS.semibold }}
-                            >
-                                Sign In
-                            </Button>
+                            
                         </Link>
                     </div>
                 </div>
@@ -426,7 +421,9 @@ export default function SellerApplicationPage() {
                                                         name="password"
                                                         render={({ field }) => (
                                                             <FormItem>
-                                                                <FormLabel style={{ color: COLORS.gray, fontFamily: FONTS.semibold }}>Password*</FormLabel>
+                                                                <FormLabel style={{ color: COLORS.gray, fontFamily: FONTS.semibold }}>
+                                                                    Password*
+                                                                </FormLabel>
                                                                 <div className="relative">
                                                                     <FormControl>
                                                                         <Input
@@ -444,7 +441,7 @@ export default function SellerApplicationPage() {
                                                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                                                     </button>
                                                                 </div>
-                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                <p className="text-xs text-gray-500 mt-1 min-h-[40px]">
                                                                     Must contain at least 8 characters, including uppercase, lowercase, and a number
                                                                 </p>
                                                                 <FormMessage />
@@ -457,7 +454,9 @@ export default function SellerApplicationPage() {
                                                         name="confirmPassword"
                                                         render={({ field }) => (
                                                             <FormItem>
-                                                                <FormLabel style={{ color: COLORS.gray, fontFamily: FONTS.semibold }}>Confirm Password*</FormLabel>
+                                                                <FormLabel style={{ color: COLORS.gray, fontFamily: FONTS.semibold }}>
+                                                                    Confirm Password*
+                                                                </FormLabel>
                                                                 <div className="relative">
                                                                     <FormControl>
                                                                         <Input
@@ -475,6 +474,9 @@ export default function SellerApplicationPage() {
                                                                         {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                                                     </button>
                                                                 </div>
+                                                                <p className="text-xs text-gray-500 mt-1 min-h-[40px]">
+                                                                    Must match the password 
+                                                                </p>
                                                                 <FormMessage />
                                                             </FormItem>
                                                         )}
