@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import logoImage from '../../assets/img/logo.png';
-import heroImage from '../../assets/img/elyu-capitol.jpg'; 
+import heroImage from '../../assets/img/elyu-capitol.jpg';
+import { LegalModal } from '@/components/ui/legal-modal';
 import {
     Eye, EyeOff, ArrowLeft, Upload, X, FileText, CheckCircle2, AlertTriangle
 } from 'lucide-react';
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ const applicationFormSchema = z.object({
         .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
         .regex(/[0-9]/, { message: "Password must contain at least one number" }),
     confirmPassword: z.string(),
-    phoneNumber: z.string().min(10, { message: "Please enter a valid phone number" }),
+    phoneNumber: z.string().min(10, { message: "Please enter a valid phone number" }).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
@@ -60,10 +60,21 @@ export default function SellerApplicationPage() {
     const [modalType, setModalType] = useState<'success' | 'error'>('success');
     const [modalTitle, setModalTitle] = useState('');
     const [modalDescription, setModalDescription] = useState('');
+    const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+    const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy'>('terms');
 
     // Animation states
     const [hasScrolled, setHasScrolled] = useState(false);
     const [showHeroImage, setShowHeroImage] = useState(false);
+
+    const openLegalModal = (type: 'terms' | 'privacy') => {
+        setLegalModalType(type);
+        setIsLegalModalOpen(true);
+    };
+
+    const closeLegalModal = () => {
+        setIsLegalModalOpen(false);
+    };
 
     // Handle scroll effects
     useEffect(() => {
@@ -152,27 +163,30 @@ export default function SellerApplicationPage() {
         try {
             // Create FormData object to send files and form data
             const formData = new FormData();
+            formData.append('first_name', values.firstName);
+            formData.append('last_name', values.lastName);
+            formData.append('email', values.email);
+            formData.append('password', values.password);
+            if (values.phoneNumber) {
+                formData.append('phone_number', values.phoneNumber);
+            }
+            formData.append('business_permit', permitFile);
+            formData.append('valid_id', validIdFile);
+            if (dtiFile) {
+                formData.append('dti_registration', dtiFile);
+            }
 
-            // Add all form fields except confirmPassword
-            Object.entries(values).forEach(([key, value]) => {
-                if (key !== 'confirmPassword') {
-                    formData.append(key, value.toString());
-                }
+            // Send to FastAPI endpoint
+            const response = await fetch('http://localhost:8000/seller-application', {
+                method: 'POST',
+                body: formData,
             });
 
-            // Add files
-            if (permitFile) {
-                formData.append('businessPermit', permitFile);
-            }
-            if (validIdFile) {
-                formData.append('validId', validIdFile);
-            }
-            if (dtiFile) {
-                formData.append('dtiRegistration', dtiFile);
-            }
+            const result = await response.json();
 
-            // Simulate API call delay (replace with actual API call in production)
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            if (!response.ok) {
+                throw new Error(result.detail || 'Application submission failed');
+            }
 
             // Show success message
             setModalType('success');
@@ -181,11 +195,10 @@ export default function SellerApplicationPage() {
             setShowFeedbackModal(true);
         } catch (error: any) {
             console.error('Application submission error:', error);
-
             // Show error message
             setModalType('error');
             setModalTitle('Submission Failed');
-            setModalDescription('There was a problem submitting your application. Please try again.');
+            setModalDescription(error.message || 'There was a problem submitting your application. Please try again.');
             setShowFeedbackModal(true);
         } finally {
             setIsLoading(false);
@@ -227,9 +240,7 @@ export default function SellerApplicationPage() {
                             <ArrowLeft size={14} />
                             Back to Login
                         </Button>
-                        <Link href="/seller-login">
-                            
-                        </Link>
+                        <Link href="/seller-login"></Link>
                     </div>
                 </div>
             </header>
@@ -245,7 +256,6 @@ export default function SellerApplicationPage() {
                             opacity: 0.9
                         }}
                     />
-
                     {/* Decorative shapes */}
                     <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-b from-transparent to-gray-50 z-10" />
                     <div className="absolute -bottom-32 -right-32 w-64 h-64 rounded-full bg-white opacity-10" />
@@ -393,7 +403,7 @@ export default function SellerApplicationPage() {
                                                         name="phoneNumber"
                                                         render={({ field }) => (
                                                             <FormItem>
-                                                                <FormLabel style={{ color: COLORS.gray, fontFamily: FONTS.semibold }}>Phone Number*</FormLabel>
+                                                                <FormLabel style={{ color: COLORS.gray, fontFamily: FONTS.semibold }}>Phone Number</FormLabel>
                                                                 <FormControl>
                                                                     <Input
                                                                         placeholder="Enter your phone number"
@@ -475,7 +485,7 @@ export default function SellerApplicationPage() {
                                                                     </button>
                                                                 </div>
                                                                 <p className="text-xs text-gray-500 mt-1 min-h-[40px]">
-                                                                    Must match the password 
+                                                                    Must match the password
                                                                 </p>
                                                                 <FormMessage />
                                                             </FormItem>
@@ -499,8 +509,7 @@ export default function SellerApplicationPage() {
                                                             <span className="text-xs font-normal ml-2 text-gray-500">(Required)</span>
                                                         </Label>
                                                         <div
-                                                            className={`border-2 rounded-lg p-4 text-center cursor-pointer transition-colors ${permitFile ? 'border-green-500 bg-green-50' : 'border-dashed hover:bg-gray-50'
-                                                                }`}
+                                                            className={`border-2 rounded-lg p-4 text-center cursor-pointer transition-colors ${permitFile ? 'border-green-500 bg-green-50' : 'border-dashed hover:bg-gray-50'}`}
                                                             onClick={() => document.getElementById('permit-upload')?.click()}
                                                         >
                                                             {permitPreviewUrl ? (
@@ -571,8 +580,7 @@ export default function SellerApplicationPage() {
                                                             <span className="text-xs font-normal ml-2 text-gray-500">(Required)</span>
                                                         </Label>
                                                         <div
-                                                            className={`border-2 rounded-lg p-4 text-center cursor-pointer transition-colors ${validIdFile ? 'border-green-500 bg-green-50' : 'border-dashed hover:bg-gray-50'
-                                                                }`}
+                                                            className={`border-2 rounded-lg p-4 text-center cursor-pointer transition-colors ${validIdFile ? 'border-green-500 bg-green-50' : 'border-dashed hover:bg-gray-50'}`}
                                                             onClick={() => document.getElementById('valid-id-upload')?.click()}
                                                         >
                                                             {validIdPreviewUrl ? (
@@ -643,8 +651,7 @@ export default function SellerApplicationPage() {
                                                             <span className="text-xs font-normal ml-2 text-gray-500">(Optional)</span>
                                                         </Label>
                                                         <div
-                                                            className={`border-2 rounded-lg p-4 text-center cursor-pointer transition-colors ${dtiFile ? 'border-green-500 bg-green-50' : 'border-dashed hover:bg-gray-50'
-                                                                }`}
+                                                            className={`border-2 rounded-lg p-4 text-center cursor-pointer transition-colors ${dtiFile ? 'border-green-500 bg-green-50' : 'border-dashed hover:bg-gray-50'}`}
                                                             onClick={() => document.getElementById('dti-upload')?.click()}
                                                         >
                                                             {dtiPreviewUrl ? (
@@ -721,7 +728,25 @@ export default function SellerApplicationPage() {
                                                     </div>
                                                     <div className="ml-3 text-sm">
                                                         <label htmlFor="terms" className="text-gray-600">
-                                                            I agree to the <Link href="/terms" className="font-medium underline" style={{ color: COLORS.primary }}>Terms and Conditions</Link> and <Link href="/privacy" className="font-medium underline" style={{ color: COLORS.primary }}>Privacy Policy</Link>. I confirm that all information provided is accurate and complete.
+                                                            I agree to the{' '}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openLegalModal('terms')}
+                                                                className="font-medium underline"
+                                                                style={{ color: COLORS.primary }}
+                                                            >
+                                                                Terms and Conditions
+                                                            </button>{' '}
+                                                            and{' '}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openLegalModal('privacy')}
+                                                                className="font-medium underline"
+                                                                style={{ color: COLORS.primary }}
+                                                            >
+                                                                Privacy Policy
+                                                            </button>
+                                                            . I confirm that all information provided is accurate and complete.
                                                         </label>
                                                     </div>
                                                 </div>
@@ -779,20 +804,20 @@ export default function SellerApplicationPage() {
                                 <h3 className="text-lg font-semibold text-center mb-2" style={{ fontFamily: FONTS.semibold, color: COLORS.accent }}>
                                     Complete Your Profile
                                 </h3>
-                                <p className="text-gray-600 text-center text-sm">
-                                    Fill out all required fields accurately. This information will be used to verify your identity as a seller.
+                                <p className="text-gray-600 text-center text-sm" style={{ fontFamily: FONTS.regular }}>
+                                    Provide accurate personal and contact information to help us verify your identity.
                                 </p>
                             </div>
 
                             <div className="bg-white p-6 rounded-xl shadow-md">
                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4 mx-auto">
-                                    <Upload size={24} style={{ color: COLORS.primary }} />
+                                    <FileText size={24} style={{ color: COLORS.primary }} />
                                 </div>
                                 <h3 className="text-lg font-semibold text-center mb-2" style={{ fontFamily: FONTS.semibold, color: COLORS.accent }}>
                                     Upload Documents
                                 </h3>
-                                <p className="text-gray-600 text-center text-sm">
-                                    Submit clear copies of your business permit and valid ID. These documents help us verify your business legitimacy.
+                                <p className="text-gray-600 text-center text-sm" style={{ fontFamily: FONTS.regular }}>
+                                    Submit clear and valid documents, such as your business permit and ID, for verification.
                                 </p>
                             </div>
 
@@ -801,10 +826,10 @@ export default function SellerApplicationPage() {
                                     <AlertTriangle size={24} style={{ color: COLORS.primary }} />
                                 </div>
                                 <h3 className="text-lg font-semibold text-center mb-2" style={{ fontFamily: FONTS.semibold, color: COLORS.accent }}>
-                                    Await Verification
+                                    Review and Submit
                                 </h3>
-                                <p className="text-gray-600 text-center text-sm">
-                                    Our team will review your application. You'll receive an email notification once your account is approved.
+                                <p className="text-gray-600 text-center text-sm" style={{ fontFamily: FONTS.regular }}>
+                                    Double-check your information and documents before submitting to avoid delays.
                                 </p>
                             </div>
                         </div>
@@ -812,87 +837,12 @@ export default function SellerApplicationPage() {
                 </section>
             </main>
 
-            {/* Footer */}
-            <footer className="bg-gray-800 text-white py-12">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                        <div>
-                            <div className="flex items-center gap-3 mb-4">
-                                <Image
-                                    src={logoImage}
-                                    alt="Produkto Elyukal"
-                                    width={32}
-                                    height={32}
-                                    className="rounded-full"
-                                />
-                                <h3 className="text-lg font-bold" style={{ fontFamily: FONTS.bold, color: COLORS.gold }}>
-                                    PRODUKTO ELYUKAL
-                                </h3>
-                            </div>
-                            <p className="text-gray-400 text-sm mb-6">
-                                Connecting local sellers with customers across La Union and beyond.
-                            </p>
-                            <div className="flex space-x-4">
-                                <a href="#" className="text-gray-400 hover:text-white">
-                                    <span className="sr-only">Facebook</span>
-                                    <div className="w-6 h-6 rounded-full bg-gray-700"></div>
-                                </a>
-                                <a href="#" className="text-gray-400 hover:text-white">
-                                    <span className="sr-only">Instagram</span>
-                                    <div className="w-6 h-6 rounded-full bg-gray-700"></div>
-                                </a>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ fontFamily: FONTS.semibold }}>
-                                For Sellers
-                            </h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><a href="#" className="text-gray-400 hover:text-white">How to Sell</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Seller Guidelines</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Seller FAQ</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Success Stories</a></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ fontFamily: FONTS.semibold }}>
-                                Company
-                            </h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><a href="#" className="text-gray-400 hover:text-white">About Us</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Careers</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">News & Press</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Contact</a></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ fontFamily: FONTS.semibold }}>
-                                Legal
-                            </h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><a href="#" className="text-gray-400 hover:text-white">Terms of Service</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Privacy Policy</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Cookie Policy</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white">Legal Notices</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-gray-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-sm text-gray-400">
-                            © {new Date().getFullYear()} Produkto Elyukal. All rights reserved.
-                        </p>
-                        <div className="mt-4 md:mt-0">
-                            <p className="text-xs text-gray-500">
-                                A platform for La Union's local products and sellers.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            {/* Legal Modal */}
+            <LegalModal
+                isOpen={isLegalModalOpen}
+                onClose={closeLegalModal}
+                type={legalModalType}
+            />
 
             {/* Feedback Modal */}
             <FeedbackModal
