@@ -42,8 +42,8 @@ async def submit_seller_application(
             if file:
                 if file.size > max_size_bytes:
                     raise HTTPException(status_code=400, detail=f"File {file.filename} exceeds 5MB limit")
-                if file.content_type not in ["image/jpeg", "image/png", "application/pdf"]:
-                    raise HTTPException(status_code=400, detail=f"File {file.filename} must be JPEG, PNG, or PDF")
+                if not file.content_type.startswith("image/"):
+                    raise HTTPException(status_code=400, detail=f"File {file.filename} must be an image (JPEG or PNG)")
 
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -51,8 +51,14 @@ async def submit_seller_application(
         # Upload files to Supabase Storage
         async def upload_file(file: UploadFile, bucket: str) -> str:
             try:
+                # Create a folder name based on the applicant's name
+                folder_name = f"{application_data.first_name.lower()}_{application_data.last_name.lower()}"
                 file_extension = file.filename.split('.')[-1].lower()
-                file_path = f"{uuid4()}.{file_extension}"
+                file_name = file.filename.split('/')[-1].split('\\')[-1]  # Get just the filename without path
+                file_name = file_name.split('.')[0]  # Remove extension
+                
+                # Create an organized path: bucket/applicant_name/file_type.extension
+                file_path = f"{folder_name}/{file_name}.{file_extension}"
                 file_content = await file.read()
                 
                 # Upload the file

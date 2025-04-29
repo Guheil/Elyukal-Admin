@@ -122,16 +122,12 @@ export default function SellerApplicationPage() {
                 return;
             }
 
-            if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+            if (file.type.startsWith('image/')) {
                 setFile(file);
-                if (file.type.startsWith('image/')) {
-                    const previewUrl = URL.createObjectURL(file);
-                    setPreviewUrl(previewUrl);
-                } else {
-                    setPreviewUrl(null);
-                }
+                const previewUrl = URL.createObjectURL(file);
+                setPreviewUrl(previewUrl);
             } else {
-                toast.error('Please upload an image or PDF file');
+                toast.error('Please upload a clear image file (JPEG, PNG)');
             }
         }
     };
@@ -532,21 +528,7 @@ export default function SellerApplicationPage() {
                                                                         <X size={14} />
                                                                     </button>
                                                                 </div>
-                                                            ) : permitFile && permitFile.type === 'application/pdf' ? (
-                                                                <div className="relative flex flex-col items-center">
-                                                                    <FileText size={48} className="text-green-500 mb-2" />
-                                                                    <span className="text-sm text-gray-600 font-medium">{permitFile.name}</span>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            removeFile(setPermitFile, setPermitPreviewUrl, permitPreviewUrl);
-                                                                        }}
-                                                                    >
-                                                                        <X size={14} />
-                                                                    </button>
-                                                                </div>
+
                                                             ) : (
                                                                 <div className="flex flex-col items-center py-6">
                                                                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
@@ -556,7 +538,7 @@ export default function SellerApplicationPage() {
                                                                         Upload Business Permit
                                                                     </p>
                                                                     <p className="text-xs text-gray-500 mt-1">
-                                                                        PNG, JPG or PDF (max 5MB)
+                                                                        Clear PNG or JPG image only (max 5MB)
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -564,12 +546,12 @@ export default function SellerApplicationPage() {
                                                                 id="permit-upload"
                                                                 type="file"
                                                                 className="hidden"
-                                                                accept="image/*,application/pdf"
+                                                                accept="image/*"
                                                                 onChange={(e) => handleFileUpload(e, setPermitFile, setPermitPreviewUrl)}
                                                             />
                                                         </div>
                                                         {!permitFile && (
-                                                            <p className="text-xs text-gray-500">Municipal business permit is required for verification</p>
+                                                            <p className="text-xs text-gray-500">Municipal business permit is required for verification. Upload a clear, well-lit photo showing all details.</p>
                                                         )}
                                                     </div>
 
@@ -603,21 +585,7 @@ export default function SellerApplicationPage() {
                                                                         <X size={14} />
                                                                     </button>
                                                                 </div>
-                                                            ) : validIdFile && validIdFile.type === 'application/pdf' ? (
-                                                                <div className="relative flex flex-col items-center">
-                                                                    <FileText size={48} className="text-green-500 mb-2" />
-                                                                    <span className="text-sm text-gray-600 font-medium">{validIdFile.name}</span>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            removeFile(setValidIdFile, setValidIdPreviewUrl, validIdPreviewUrl);
-                                                                        }}
-                                                                    >
-                                                                        <X size={14} />
-                                                                    </button>
-                                                                </div>
+
                                                             ) : (
                                                                 <div className="flex flex-col items-center py-6">
                                                                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
@@ -627,7 +595,7 @@ export default function SellerApplicationPage() {
                                                                         Upload Valid ID
                                                                     </p>
                                                                     <p className="text-xs text-gray-500 mt-1">
-                                                                        Driver's License, Passport, UMID, etc.
+                                                                        Clear photo of Driver's License, Passport, UMID, etc.
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -635,7 +603,7 @@ export default function SellerApplicationPage() {
                                                                 id="valid-id-upload"
                                                                 type="file"
                                                                 className="hidden"
-                                                                accept="image/*,application/pdf"
+                                                                accept="image/*"
                                                                 onChange={(e) => handleFileUpload(e, setValidIdFile, setValidIdPreviewUrl)}
                                                             />
                                                         </div>
@@ -674,21 +642,7 @@ export default function SellerApplicationPage() {
                                                                         <X size={14} />
                                                                     </button>
                                                                 </div>
-                                                            ) : dtiFile && dtiFile.type === 'application/pdf' ? (
-                                                                <div className="relative flex flex-col items-center">
-                                                                    <FileText size={48} className="text-green-500 mb-2" />
-                                                                    <span className="text-sm text-gray-600 font-medium">{dtiFile.name}</span>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            removeFile(setDtiFile, setDtiPreviewUrl, dtiPreviewUrl);
-                                                                        }}
-                                                                    >
-                                                                        <X size={14} />
-                                                                    </button>
-                                                                </div>
+
                                                             ) : (
                                                                 <div className="flex flex-col items-center py-6">
                                                                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
@@ -698,7 +652,7 @@ export default function SellerApplicationPage() {
                                                                         Upload DTI Registration
                                                                     </p>
                                                                     <p className="text-xs text-gray-500 mt-1">
-                                                                        Department of Trade and Industry registration document
+                                                                        Clear photo of DTI registration document
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -706,7 +660,7 @@ export default function SellerApplicationPage() {
                                                                 id="dti-upload"
                                                                 type="file"
                                                                 className="hidden"
-                                                                accept="image/*,application/pdf"
+                                                                accept="image/*"
                                                                 onChange={(e) => handleFileUpload(e, setDtiFile, setDtiPreviewUrl)}
                                                             />
                                                         </div>

@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { Bell, Calendar, ChevronDown, BarChart2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,31 @@ interface HeaderProps {
 }
 
 export default function Header({ user, notificationsCount }: HeaderProps) {
+    const [currentDate, setCurrentDate] = useState<string>('');
+
+    useEffect(() => {
+        // Function to format the current date
+        const updateDate = () => {
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+            });
+            setCurrentDate(formattedDate);
+        };
+
+        // Update date immediately
+        updateDate();
+
+        // Set interval to update date every minute (60000ms)
+        const intervalId = setInterval(updateDate, 60000);
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(intervalId);
+    }, []);
+
     return (
         <header className="h-20 px-6 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: COLORS.white }}>
             <div className="flex items-center gap-4 flex-1">
@@ -23,7 +50,7 @@ export default function Header({ user, notificationsCount }: HeaderProps) {
                 <div className="hidden md:block">
                     <div className="flex items-center gap-2 text-sm" style={{ color: COLORS.gray }}>
                         <Calendar size={16} />
-                        <span>Saturday, March 8, 2025</span>
+                        <span>{currentDate || 'Loading date...'}</span>
                     </div>
                 </div>
             </div>
