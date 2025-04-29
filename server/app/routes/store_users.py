@@ -50,22 +50,26 @@ async def submit_seller_application(
 
         # Upload files to Supabase Storage
         async def upload_file(file: UploadFile, bucket: str) -> str:
-            file_extension = file.filename.split('.')[-1]
-            file_path = f"public/{application_data.email}-{uuid4()}.{file_extension}"
-            file_content = await file.read()
             try:
-                response = supabase_client.storage.from_(bucket).upload(file_path, file_content)
-                # Check if upload was successful (response is not None and no error)
-                if not response or hasattr(response, 'error') and response.error:
-                    error_message = getattr(response, 'error', 'Unknown error')
-                    logger.error(f"Failed to upload {file.filename} to {bucket}: {error_message}")
-                    raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}")
-                # Get the public URL for the uploaded file
+                file_extension = file.filename.split('.')[-1].lower()
+                file_path = f"{uuid4()}.{file_extension}"
+                file_content = await file.read()
+                
+                # Upload the file
+                supabase_client.storage.from_(bucket).upload(
+                    file_path,
+                    file_content,
+                    file_options={"content-type": file.content_type}
+                )
+                
+                # Get and return the public URL
                 public_url = supabase_client.storage.from_(bucket).get_public_url(file_path)
-                return public_url
+                logger.info(f"Uploaded file to {bucket}/{file_path}")
+                return file_path  # Return just the path, not the full URL
+                
             except Exception as e:
-                logger.error(f"Exception during file upload to {bucket}: {str(e)}")
-                raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}")
+                logger.error(f"Failed to upload file to {bucket}: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
 
         business_permit_path = await upload_file(business_permit, "permits")
         valid_id_path = await upload_file(valid_id, "valid-ids")
@@ -97,3 +101,58 @@ async def submit_seller_application(
     except Exception as e:
         logger.exception(f"Error submitting seller application: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
+@router.get("/seller-applications")
+async def get_seller_applications():
+    """Get all seller applications"""
+    try:
+        response = supabase_client.table("store_user").select("*").execute()
+        return response.data
+    except Exception as e:
+        logger.exception(f"Error fetching seller applications: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/seller-applications/{application_id}")
+async def get_seller_application(application_id: str):
+    """Get a specific seller application"""
+    try:
+        response = supabase_client.table("store_user").select(
+            "id, first_name, last_name, email, phone_number, status, created_at, " +
+            "business_permit, valid_id, dti_registration"  # Changed from *_url to match actual column names
+        ).eq("id", application_id).single().execute()
+        
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Application not found")
+        
+        # Get public URLs for documents
+        data = response.data
+        if data.get('business_permit'):
+            data['business_permit'] = supabase_client.storage.from_("permits").get_public_url(data['business_permit'])
+        if data.get('valid_id'):
+            data['valid_id'] = supabase_client.storage.from_("valid-ids").get_public_url(data['valid_id'])
+        if data.get('dti_registration'):
+            data['dti_registration'] = supabase_client.storage.from_("dti").get_public_url(data['dti_registration'])
+        
+        return data
+    except Exception as e:
+        logger.exception(f"Error fetching seller application: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/seller-applications/{application_id}/status")
+async def update_application_status(application_id: str, status: str):
+    """Update the status of a seller application"""
+    try:
+        if status not in ['approved', 'rejected']:
+            raise HTTPException(status_code=400, detail="Invalid status")
+            
+        response = supabase_client.table("store_user").update(
+            {"status": status}
+        ).eq("id", application_id).execute()
+        
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        return response.data[0]
+    except Exception as e:
+        logger.exception(f"Error updating application status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

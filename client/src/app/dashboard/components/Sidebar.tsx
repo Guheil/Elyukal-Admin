@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, LayoutDashboard, Package, Users, MapPin, BarChart3, Settings, LogOut, ChevronDown, Store, User, LucideSquareActivity } from 'lucide-react';
+import { ShoppingBag, LayoutDashboard, Package, Users, MapPin, BarChart3, Settings, LogOut, ChevronDown, Store, User, LucideSquareActivity, UserPlus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { COLORS } from '../../constants/colors';
@@ -114,6 +114,9 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                         </Link>
                         <Link href="/activity">
                             <NavItem icon={<LucideSquareActivity />} label="Admin Activities" isActive={false} isCollapsed={isCollapsed} />
+                        </Link>
+                        <Link href="/seller-applications">
+                            <NavItem icon={<UserPlus />} label="Seller Applications" isActive={false} isCollapsed={isCollapsed} />
                         </Link>
                         {/* Other nav items */}
                     </nav>
