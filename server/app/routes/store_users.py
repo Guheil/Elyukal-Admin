@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Form, File, UploadFile, Depends
-from pydantic import EmailStr, BaseModel, validator
+from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
-from app.schemas.store_user import SellerApplication
 from app.db.database import supabase_client
 from app.auth.auth_handler import get_current_user
 import bcrypt
@@ -12,17 +11,32 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Store User"])
 
+# Pydantic model for SellerApplication
+class SellerApplication(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    password: str
+    phone_number: Optional[str] = None
+    status: str = "pending"  # Default to 'pending'
+
+    @validator('status')
+    def validate_status(cls, v):
+        allowed_values = ['pending', 'accepted', 'rejected']
+        if v.lower() not in allowed_values:
+            raise ValueError(f'Status must be one of: {", ".join(allowed_values)}')
+        return v.lower()
+
 # Pydantic model for status update request
 class StatusUpdate(BaseModel):
     status: str
 
     @validator('status')
     def validate_status(cls, v):
-        # Update these values to match your DB constraint exactly
-        allowed_values = ['accepted', 'rejected', 'pending']  
+        allowed_values = ['accepted', 'rejected', 'pending']
         if v.lower() not in allowed_values:
             raise ValueError(f'Status must be one of: {", ".join(allowed_values)}')
-        return v.lower()  # Make sure this matches what the DB expects
+        return v.lower()
 
 @router.post("/seller-application")
 async def submit_seller_application(
@@ -31,13 +45,14 @@ async def submit_seller_application(
     email: EmailStr = Form(...),
     password: str = Form(...),
     phone_number: Optional[str] = Form(None),
+    status: str = Form("pending"),  # Default to 'pending'
     business_permit: UploadFile = File(...),
     valid_id: UploadFile = File(...),
     dti_registration: Optional[UploadFile] = File(None)
 ):
     """
     Submit a seller application.
-    This endpoint handles form data and file uploads, storing them in Supabase and inserting a record into the store_user table.
+    Handles form data and file uploads, storing them in Supabase and inserting a record into the store_user table.
     """
     try:
         # Validate form data using Pydantic schema
@@ -46,7 +61,8 @@ async def submit_seller_application(
             last_name=last_name,
             email=email,
             password=password,
-            phone_number=phone_number
+            phone_number=phone_number,
+            status=status
         )
 
         # Validate file types and sizes (max 5MB)
@@ -67,24 +83,23 @@ async def submit_seller_application(
                 # Create a folder name based on the applicant's name
                 folder_name = f"{application_data.first_name.lower()}_{application_data.last_name.lower()}"
                 file_extension = file.filename.split('.')[-1].lower()
-                file_name = file.filename.split('/')[-1].split('\\')[-1]  # Get just the filename without path
+                file_name = file.filename.split('/')[-1].split('\\')[-1]  # Get filename without path
                 file_name = file_name.split('.')[0]  # Remove extension
                 
-                # Create an organized path: bucket/applicant_name/file_type.extension
+                # Create path: bucket/applicant_name/file_type.extension
                 file_path = f"{folder_name}/{file_name}.{file_extension}"
                 file_content = await file.read()
                 
-                # Upload the file
+                # Upload file
                 supabase_client.storage.from_(bucket).upload(
                     file_path,
                     file_content,
                     file_options={"content-type": file.content_type}
                 )
                 
-                # Get and return the public URL
-                public_url = supabase_client.storage.from_(bucket).get_public_url(file_path)
+                # Return the file path
                 logger.info(f"Uploaded file to {bucket}/{file_path}")
-                return file_path  # Return just the path, not the full URL
+                return file_path
                 
             except Exception as e:
                 logger.error(f"Failed to upload file to {bucket}: {str(e)}")
@@ -104,7 +119,8 @@ async def submit_seller_application(
             "business_permit": business_permit_path,
             "valid_id": valid_id_path,
             "dti_registration": dti_registration_path,
-            # store_owned is null, status defaults to 'pending'
+            "store_owned": None,  # Nullable foreign key to stores.store_id
+            "status": application_data.status  # Use validated status
         }
 
         response = supabase_client.table("store_user").insert(user_data).execute()
@@ -113,7 +129,7 @@ async def submit_seller_application(
             raise HTTPException(status_code=500, detail="Failed to insert user data")
 
         logger.info(f"Submitted seller application for {application_data.email}")
-        return {"message": "Application submitted successfully", "status": "pending"}
+        return {"message": "Application submitted successfully", "status": application_data.status}
 
     except HTTPException as he:
         raise he
@@ -123,9 +139,24 @@ async def submit_seller_application(
 
 @router.get("/seller-applications")
 async def get_seller_applications():
-    """Get all seller applications"""
+    """Get all seller applications."""
     try:
-        response = supabase_client.table("store_user").select("*").execute()
+        response = supabase_client.table("store_user").select(
+            "id, first_name, last_name, email, phone_number, status, created_at, "
+            "business_permit, valid_id, dti_registration, store_owned"
+        ).execute()
+        if not response.data:
+            return []
+        
+        # Add public URLs for file fields
+        for application in response.data:
+            if application.get('business_permit'):
+                application['business_permit'] = supabase_client.storage.from_("permits").get_public_url(application['business_permit'])
+            if application.get('valid_id'):
+                application['valid_id'] = supabase_client.storage.from_("valid-ids").get_public_url(application['valid_id'])
+            if application.get('dti_registration'):
+                application['dti_registration'] = supabase_client.storage.from_("dti").get_public_url(application['dti_registration'])
+        
         return response.data
     except Exception as e:
         logger.exception(f"Error fetching seller applications: {str(e)}")
@@ -133,11 +164,11 @@ async def get_seller_applications():
 
 @router.get("/seller-applications/{application_id}")
 async def get_seller_application(application_id: str):
-    """Get a specific seller application"""
+    """Get a specific seller application."""
     try:
         response = supabase_client.table("store_user").select(
-            "id, first_name, last_name, email, phone_number, status, created_at, " +
-            "business_permit, valid_id, dti_registration"
+            "id, first_name, last_name, email, phone_number, status, created_at, "
+            "business_permit, valid_id, dti_registration, store_owned"
         ).eq("id", application_id).single().execute()
         
         if not response.data:
@@ -159,13 +190,16 @@ async def get_seller_application(application_id: str):
 
 @router.put("/seller-applications/{application_id}/status")
 async def update_application_status(
-    application_id: str, 
+    application_id: str,
     status_update: StatusUpdate,
     current_user: dict = Depends(get_current_user)
 ):
-    """Update the status of a seller application"""
+    """
+    Update the status of a seller application.
+    Optionally creates a store if status is 'accepted'.
+    """
     try:
-        # Validate status - use the exact format expected by the database
+        # Validate status
         status = status_update.status.lower()
         
         # Check if application exists and current status
@@ -179,16 +213,27 @@ async def update_application_status(
         
         if current_status != 'pending':
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail=f"Cannot update status. Application is already {current_status}"
             )
 
-        # Update the store_user status without creating a store
-        status_value = status  # Ensure this matches the DB constraint
-        response = supabase_client.table("store_user").update({
-            "status": status_value,
-            "store_owned": None  # Keep store_owned as null since no store is created
-        }).eq("id", application_id).execute()
+        # Handle status update
+        update_data = {"status": status, "store_owned": None}
+        
+        if status == "accepted":
+            # Create a new store
+            store_data = {
+                "store_name": f"{check_response.data[0]['first_name']}'s Store",
+                # Add other store fields as needed
+            }
+            store_response = supabase_client.table("stores").insert(store_data).execute()
+            if not store_response.data:
+                raise HTTPException(status_code=500, detail="Failed to create store")
+            
+            update_data["store_owned"] = store_response.data[0]["store_id"]
+
+        # Update store_user
+        response = supabase_client.table("store_user").update(update_data).eq("id", application_id).execute()
         
         if not response.data:
             logger.error(f"Failed to update status for application {application_id}")

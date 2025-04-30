@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import { useStoreUserAuth } from '@/context/StoreUserAuthContext';
 import Image from 'next/image';
 import logoImage from '../assets/img/logo.png';
 import {
     Eye, EyeOff, MapPin, ShoppingBag, ShieldCheck, Mail, Lock,
     ChevronRight, CheckCircle2, Activity, Settings, DollarSign, Users,
-    AlertTriangle
+    AlertTriangle, BoxIcon
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +32,7 @@ const formSchema = z.object({
 
 export default function SellerLoginPage() {
     const router = useRouter();
-    const { setUser, login } = useAuth();
+    const { setStoreUser, login } = useStoreUserAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [animateBackground, setAnimateBackground] = useState(false);
@@ -65,12 +66,17 @@ export default function SellerLoginPage() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsLoading(true);
         try {
-            // This would be replaced with seller-specific login logic
-            // For now, using the same login function but would be modified when API is ready
-            await login(values.email, values.password);
+            // Use the login function from the already imported hook at the top of the file
             
-            toast.success('Login successful!');
-            router.push('/seller/dashboard'); // Would redirect to seller dashboard when implemented
+            const result = await login(values.email, values.password);
+            
+            if (result.success) {
+                toast.success('Login successful!');
+                if (result.status === 'accepted') {
+                    router.push('/store-user/dashboard');
+                }
+                // The context will handle redirects for pending/rejected statuses
+            }
         } catch (error: any) {
             console.error('Login error:', error);
             let errorMessage = 'Authentication failed. Please verify your credentials.';
@@ -96,6 +102,23 @@ export default function SellerLoginPage() {
                         type: 'manual',
                         message: 'Email not recognized. Please check and try again.'
                     });
+                }
+                
+                // Handle admin user trying to login as store user
+                if (errorMessage.includes('Admin users cannot login as store users')) {
+                    form.setError('email', {
+                        type: 'manual',
+                        message: 'Admin users cannot login as store users. Please use the admin login.'
+                    });
+                }
+                
+                // Handle account status errors
+                if (errorMessage.includes('account status')) {
+                    if (errorMessage.includes("'pending'")) {
+                        router.push('/seller-login/pending');
+                    } else if (errorMessage.includes("'rejected'")) {
+                        router.push('/seller-login/rejected');
+                    }
                 }
             }
             
@@ -191,9 +214,9 @@ export default function SellerLoginPage() {
                             description="Highlight your store location"
                         />
                         <FeatureCard
-                            icon={<DollarSign className="h-5 w-5" style={{ color: COLORS.gold }} />}
-                            title="Payment Processing"
-                            description="Secure transaction handling"
+                            icon={<BoxIcon className="h-5 w-5" style={{ color: COLORS.gold }} />}
+                            title="Custom AR Products"
+                            description="Submit your 3d models for AR"
                         />
                     </div>
 
