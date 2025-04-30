@@ -747,7 +747,7 @@ export default function ApplicationDetailsPage() {
                                                                 </Button>
                                                                 <Button
                                                                     variant="destructive"
-                                                                    className=".albumitems-center justify-center gap-2 transition-all duration-300"
+                                                                    className="items-center justify-center gap-2 transition-all duration-300"
                                                                     onClick={() => handleStatusUpdate('rejected')}
                                                                 >
                                                                     <XCircle size={16} />
