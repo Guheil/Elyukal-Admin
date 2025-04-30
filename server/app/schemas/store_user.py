@@ -7,3 +7,4 @@ class SellerApplication(BaseModel):
     email: EmailStr
     password: str
     phone_number: Optional[str] = None
+    status: str

@@ -15,7 +15,6 @@ export default function Header({ user, notificationsCount }: HeaderProps) {
     const [currentDate, setCurrentDate] = useState<string>('');
 
     useEffect(() => {
-        // Function to format the current date
         const updateDate = () => {
             const now = new Date();
             const formattedDate = now.toLocaleDateString('en-US', {
@@ -27,13 +26,8 @@ export default function Header({ user, notificationsCount }: HeaderProps) {
             setCurrentDate(formattedDate);
         };
 
-        // Update date immediately
         updateDate();
-
-        // Set interval to update date every minute (60000ms)
         const intervalId = setInterval(updateDate, 60000);
-
-        // Cleanup interval on component unmount
         return () => clearInterval(intervalId);
     }, []);
 
@@ -50,6 +44,7 @@ export default function Header({ user, notificationsCount }: HeaderProps) {
                 <div className="hidden md:block">
                     <div className="flex items-center gap-2 text-sm" style={{ color: COLORS.gray }}>
                         <Calendar size={16} />
+                        {/* Only render the date on the client */}
                         <span>{currentDate || 'Loading date...'}</span>
                     </div>
                 </div>

@@ -12,6 +12,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
+import { toast } from 'react-hot-toast';
 import {
     ArrowLeft,
     CheckCircle,
@@ -36,7 +37,7 @@ interface ApplicationDetails {
     last_name: string;
     email: string;
     phone_number: string | null;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'accepted' | 'rejected';
     created_at: string;
     business_permit: string;
     valid_id: string;
@@ -51,7 +52,8 @@ export default function ApplicationDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [actionType, setActionType] = useState<'approved' | 'rejected' | null>(null);
+    const [actionType, setActionType] = useState<'accepted' | 'rejected' | null>(null);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [activeTab, setActiveTab] = useState('profile');
     const [documentErrors, setDocumentErrors] = useState<{ [key: string]: boolean }>({});
 
@@ -80,7 +82,11 @@ export default function ApplicationDetailsPage() {
         }
     };
 
-    const handleStatusUpdate = (status: 'approved' | 'rejected') => {
+    const handleStatusUpdate = (status: 'accepted' | 'rejected') => {
+        if (!params.id) {
+            toast.error('Invalid application ID');
+            return;
+        }
         setActionType(status);
         setIsConfirmModalOpen(true);
     };
@@ -89,27 +95,37 @@ export default function ApplicationDetailsPage() {
         if (!actionType) return;
 
         try {
+            setIsUpdatingStatus(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             const response = await fetch(`${apiUrl}/seller-applications/${params.id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
                 credentials: 'include',
                 body: JSON.stringify({ status: actionType }),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update application status');
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to update application status');
             }
 
+            const actionText = actionType === 'accepted' ? 'accepted' : 'rejected';
+            toast.success(`Application successfully ${actionText}`);
+            
             // Refresh the application details
-            fetchApplicationDetails();
-        } catch (error) {
-            console.error('Error updating application status:', error);
-        } finally {
+            await fetchApplicationDetails();
+            
+            // Close modal and reset state
             setIsConfirmModalOpen(false);
             setActionType(null);
+        } catch (error) {
+            console.error('Error updating application status:', error);
+            toast.error(`Failed to update application status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsUpdatingStatus(false);
         }
     };
 
@@ -117,7 +133,7 @@ export default function ApplicationDetailsPage() {
         switch (status) {
             case 'pending':
                 return { backgroundColor: COLORS.warning, color: 'white' };
-            case 'approved':
+            case 'accepted':
                 return { backgroundColor: COLORS.success, color: 'white' };
             case 'rejected':
                 return { backgroundColor: COLORS.error, color: 'white' };
@@ -130,7 +146,7 @@ export default function ApplicationDetailsPage() {
         switch (status) {
             case 'pending':
                 return <Clock size={18} />;
-            case 'approved':
+            case 'accepted':
                 return <CheckCircle size={18} />;
             case 'rejected':
                 return <XCircle size={18} />;
@@ -142,18 +158,18 @@ export default function ApplicationDetailsPage() {
     const getConfirmationData = () => {
         if (!actionType) return { title: '', description: '', confirmLabel: '', icon: null };
 
-        if (actionType === 'approved') {
+        if (actionType === 'accepted') {
             return {
                 title: 'Confirm Approval',
                 description: 'Are you sure you want to approve this seller application? The seller will be notified and granted access to the platform.',
-                confirmLabel: 'Approve',
+                confirmLabel: isUpdatingStatus ? 'Processing...' : 'Approve',
                 icon: <CheckCircle className="h-6 w-6 text-green-500" />
             };
         } else {
             return {
                 title: 'Confirm Rejection',
                 description: 'Are you sure you want to reject this seller application? The applicant will be notified of the rejection.',
-                confirmLabel: 'Reject',
+                confirmLabel: isUpdatingStatus ? 'Processing...' : 'Reject',
                 icon: <AlertTriangle className="h-6 w-6 text-red-500" />
             };
         }
@@ -195,7 +211,7 @@ export default function ApplicationDetailsPage() {
         const isPDF = url.toLowerCase().endsWith('.pdf');
 
         return (
-            <div 
+            <div
                 className="relative h-48 rounded-lg overflow-hidden cursor-pointer group"
                 onClick={() => handleDocumentOpen(url)}
             >
@@ -222,7 +238,7 @@ export default function ApplicationDetailsPage() {
 
     const handleDocumentOpen = (url: string) => {
         if (!url) return;
-        
+
         // Clean and encode the URL properly
         const cleanUrl = url.trim();
         const encodedUrl = encodeURIComponent(cleanUrl);
@@ -332,7 +348,7 @@ export default function ApplicationDetailsPage() {
                                         <div className="flex gap-2 w-full md:w-auto">
                                             <Button
                                                 className="flex-1 md:flex-none items-center justify-center gap-2 transition-all duration-300 hover:shadow-md"
-                                                onClick={() => handleStatusUpdate('approved')}
+                                                onClick={() => handleStatusUpdate('accepted')}
                                                 style={{ backgroundColor: COLORS.success }}
                                             >
                                                 <CheckCircle size={16} />
@@ -469,10 +485,10 @@ export default function ApplicationDetailsPage() {
                                                             <div className="relative">
                                                                 <div className="absolute -left-[25px] p-1 rounded-full bg-white shadow-md"
                                                                     style={{
-                                                                        borderColor: application.status === 'approved' ? COLORS.success : COLORS.error
+                                                                        borderColor: application.status === 'accepted' ? COLORS.success : COLORS.error
                                                                     }}>
                                                                     <div className="h-4 w-4 rounded-full" style={{
-                                                                        backgroundColor: application.status === 'approved' ? COLORS.success : COLORS.error
+                                                                        backgroundColor: application.status === 'accepted' ? COLORS.success : COLORS.error
                                                                     }}></div>
                                                                 </div>
                                                                 <h4 className="text-sm font-medium" style={{ color: COLORS.accent }}>
@@ -512,7 +528,7 @@ export default function ApplicationDetailsPage() {
                                                                     </Badge>
                                                                     <span className="text-sm" style={{ color: COLORS.gray }}>
                                                                         {application.status === 'pending' ? 'Awaiting review' :
-                                                                            application.status === 'approved' ? 'Seller account activated' :
+                                                                            application.status === 'accepted' ? 'Seller account activated' :
                                                                                 'Application declined'}
                                                                     </span>
                                                                 </div>
@@ -522,7 +538,7 @@ export default function ApplicationDetailsPage() {
                                                                 <div className="flex gap-2">
                                                                     <Button
                                                                         className="items-center justify-center gap-2 transition-all duration-300"
-                                                                        onClick={() => handleStatusUpdate('approved')}
+                                                                        onClick={() => handleStatusUpdate('accepted')}
                                                                         style={{ backgroundColor: COLORS.success }}
                                                                     >
                                                                         <CheckCircle size={16} />
@@ -708,12 +724,12 @@ export default function ApplicationDetailsPage() {
                                                                     style={getStatusBadgeStyle(application.status)}
                                                                 >
                                                                     {application.status === 'pending' ? 'Needs Verification' :
-                                                                        application.status === 'approved' ? 'Verified' :
+                                                                        application.status === 'accepted' ? 'Verified' :
                                                                             'Rejected'}
                                                                 </Badge>
                                                                 <span className="text-sm" style={{ color: COLORS.gray }}>
                                                                     {application.status === 'pending' ? 'Please review all documents' :
-                                                                        application.status === 'approved' ? 'All documents have been verified' :
+                                                                        application.status === 'accepted' ? 'All documents have been verified' :
                                                                             'Documents did not meet requirements'}
                                                                 </span>
                                                             </div>
@@ -723,7 +739,7 @@ export default function ApplicationDetailsPage() {
                                                             <div className="flex gap-2">
                                                                 <Button
                                                                     className="items-center justify-center gap-2 transition-all duration-300"
-                                                                    onClick={() => handleStatusUpdate('approved')}
+                                                                    onClick={() => handleStatusUpdate('accepted')}
                                                                     style={{ backgroundColor: COLORS.success }}
                                                                 >
                                                                     <CheckCircle size={16} />
@@ -731,7 +747,7 @@ export default function ApplicationDetailsPage() {
                                                                 </Button>
                                                                 <Button
                                                                     variant="destructive"
-                                                                    className="items-center justify-center gap-2 transition-all duration-300"
+                                                                    className=".albumitems-center justify-center gap-2 transition-all duration-300"
                                                                     onClick={() => handleStatusUpdate('rejected')}
                                                                 >
                                                                     <XCircle size={16} />
@@ -766,10 +782,3 @@ export default function ApplicationDetailsPage() {
         </div>
     );
 }
-
-
-
-
-
-
-

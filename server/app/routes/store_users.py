@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Form, File, UploadFile
-from pydantic import EmailStr
+from fastapi import APIRouter, HTTPException, Form, File, UploadFile, Depends
+from pydantic import EmailStr, BaseModel, validator
 from typing import Optional
 from app.schemas.store_user import SellerApplication
 from app.db.database import supabase_client
+from app.auth.auth_handler import get_current_user
 import bcrypt
 import logging
 from uuid import uuid4
@@ -10,6 +11,18 @@ from uuid import uuid4
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Store User"])
+
+# Pydantic model for status update request
+class StatusUpdate(BaseModel):
+    status: str
+
+    @validator('status')
+    def validate_status(cls, v):
+        # Update these values to match your DB constraint exactly
+        allowed_values = ['accepted', 'rejected', 'pending']  
+        if v.lower() not in allowed_values:
+            raise ValueError(f'Status must be one of: {", ".join(allowed_values)}')
+        return v.lower()  # Make sure this matches what the DB expects
 
 @router.post("/seller-application")
 async def submit_seller_application(
@@ -124,7 +137,7 @@ async def get_seller_application(application_id: str):
     try:
         response = supabase_client.table("store_user").select(
             "id, first_name, last_name, email, phone_number, status, created_at, " +
-            "business_permit, valid_id, dti_registration"  # Changed from *_url to match actual column names
+            "business_permit, valid_id, dti_registration"
         ).eq("id", application_id).single().execute()
         
         if not response.data:
@@ -145,20 +158,47 @@ async def get_seller_application(application_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/seller-applications/{application_id}/status")
-async def update_application_status(application_id: str, status: str):
+async def update_application_status(
+    application_id: str, 
+    status_update: StatusUpdate,
+    current_user: dict = Depends(get_current_user)
+):
     """Update the status of a seller application"""
     try:
-        if status not in ['approved', 'rejected']:
-            raise HTTPException(status_code=400, detail="Invalid status")
-            
-        response = supabase_client.table("store_user").update(
-            {"status": status}
-        ).eq("id", application_id).execute()
+        # Validate status - use the exact format expected by the database
+        status = status_update.status.lower()
+        
+        # Check if application exists and current status
+        check_response = supabase_client.table("store_user").select("*").eq("id", application_id).execute()
+        if not check_response.data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        current_status = check_response.data[0].get('status', '').lower()
+        if current_status == status:
+            return check_response.data[0]  # No change needed
+        
+        if current_status != 'pending':
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot update status. Application is already {current_status}"
+            )
+
+        # Update the store_user status without creating a store
+        status_value = status  # Ensure this matches the DB constraint
+        response = supabase_client.table("store_user").update({
+            "status": status_value,
+            "store_owned": None  # Keep store_owned as null since no store is created
+        }).eq("id", application_id).execute()
         
         if not response.data:
-            raise HTTPException(status_code=404, detail="Application not found")
+            logger.error(f"Failed to update status for application {application_id}")
+            raise HTTPException(status_code=500, detail="Failed to update application status")
             
+        logger.info(f"Successfully updated application {application_id} status to {status}")
         return response.data[0]
+        
     except Exception as e:
         logger.exception(f"Error updating application status: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=str(e))

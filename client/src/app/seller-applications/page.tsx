@@ -12,6 +12,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
+import { toast } from 'react-hot-toast';
 import { Search, Filter, ArrowUpDown, Eye, CheckCircle, XCircle, Phone, Mail, Calendar, ChevronLeft, ChevronRight, FileCheck, FileText, User } from 'lucide-react';
 
 // Define the type for seller application
@@ -21,7 +22,7 @@ interface SellerApplication {
     last_name: string;
     email: string;
     phone_number: string | null;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'accepted' | 'rejected';
     created_at: string;
     business_permit_url: string;
     valid_id_url: string;
@@ -40,7 +41,8 @@ export default function SellerApplicationsPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [applicationToAction, setApplicationToAction] = useState<{ id: string, action: 'approved' | 'rejected' } | null>(null);
+    const [applicationToAction, setApplicationToAction] = useState<{ id: string, action: 'accepted' | 'rejected' } | null>(null);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const applicationsPerPage = 8;
 
     useEffect(() => {
@@ -68,7 +70,7 @@ export default function SellerApplicationsPage() {
         }
     };
 
-    const handleStatusUpdate = (applicationId: string, status: 'approved' | 'rejected') => {
+    const handleStatusUpdate = (applicationId: string, status: 'accepted' | 'rejected') => {
         setApplicationToAction({ id: applicationId, action: status });
         setIsConfirmModalOpen(true);
     };
@@ -77,6 +79,7 @@ export default function SellerApplicationsPage() {
         if (!applicationToAction) return;
 
         try {
+            setIsUpdatingStatus(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             const response = await fetch(`${apiUrl}/seller-applications/${applicationToAction.id}/status`, {
                 method: 'PUT',
@@ -91,13 +94,19 @@ export default function SellerApplicationsPage() {
                 throw new Error('Failed to update application status');
             }
 
+            // Show success toast notification
+            const actionText = applicationToAction.action === 'accepted' ? 'accepted' : 'rejected';
+            toast.success(`Application successfully ${actionText}`);
+            
             // Refresh the applications list
             fetchApplications();
         } catch (error) {
             console.error('Error updating application status:', error);
+            toast.error(`Failed to update application status: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setIsConfirmModalOpen(false);
             setApplicationToAction(null);
+            setIsUpdatingStatus(false);
         }
     };
 
@@ -144,7 +153,7 @@ export default function SellerApplicationsPage() {
         switch (status) {
             case 'pending':
                 return { backgroundColor: COLORS.warning, color: 'white' };
-            case 'approved':
+            case 'accepted':
                 return { backgroundColor: COLORS.success, color: 'white' };
             case 'rejected':
                 return { backgroundColor: COLORS.error, color: 'white' };
@@ -156,17 +165,17 @@ export default function SellerApplicationsPage() {
     const getConfirmationData = () => {
         if (!applicationToAction) return { title: '', description: '', confirmLabel: '' };
 
-        if (applicationToAction.action === 'approved') {
+        if (applicationToAction.action === 'accepted') {
             return {
                 title: 'Confirm Approval',
                 description: 'Are you sure you want to approve this seller application? The seller will be notified and granted access to the platform.',
-                confirmLabel: 'Approve'
+                confirmLabel: isUpdatingStatus ? 'Processing...' : 'Approve'
             };
         } else {
             return {
                 title: 'Confirm Rejection',
                 description: 'Are you sure you want to reject this seller application? The applicant will be notified of the rejection.',
-                confirmLabel: 'Reject'
+                confirmLabel: isUpdatingStatus ? 'Processing...' : 'Reject'
             };
         }
     };
@@ -273,7 +282,7 @@ export default function SellerApplicationsPage() {
                                             >
                                                 <option value="all">All Status</option>
                                                 <option value="pending">Pending</option>
-                                                <option value="approved">Approved</option>
+                                                <option value="accepted">Accepted</option>
                                                 <option value="rejected">Rejected</option>
                                             </select>
                                         </div>
@@ -394,7 +403,7 @@ export default function SellerApplicationsPage() {
                                                     <div className="flex gap-2">
                                                         <Button
                                                             className="flex-1 flex items-center justify-center gap-2"
-                                                            onClick={() => handleStatusUpdate(application.id, 'approved')}
+                                                            onClick={() => handleStatusUpdate(application.id, 'accepted')}
                                                             style={{ backgroundColor: COLORS.success }}
                                                         >
                                                             <CheckCircle size={16} />

@@ -746,7 +746,7 @@ export default function SellerApplicationPage() {
                                 Application Guide
                             </h2>
                             <p className="text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: FONTS.regular }}>
-                                Follow these steps to ensure your seller application is approved quickly.
+                                Follow these steps to ensure your seller application is accepted quickly.
                             </p>
                         </div>
 
