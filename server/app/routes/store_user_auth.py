@@ -69,11 +69,8 @@ async def verify_store_user_session(request: Request) -> dict:
 async def login_store_user(response: Response, email: str = Body(...), password: str = Body(...)):
     """Login a store user and create a session"""
     try:
-        # Find the store user by email
         user_response = supabase_client.table("store_user").select("*").eq("email", email).execute()
-        
         if not user_response.data or len(user_response.data) == 0:
-            # Check if this is an admin user trying to login as store user
             admin_response = supabase_client.table("admin_user").select("*").eq("email", email).execute()
             if admin_response.data and len(admin_response.data) > 0:
                 logger.warning(f"Admin user {email} attempted to login as store user")
@@ -81,19 +78,15 @@ async def login_store_user(response: Response, email: str = Body(...), password:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
         store_user = user_response.data[0]
-        
-        # Check if user status is accepted
         if store_user.get("status") != "accepted":
             status = store_user.get("status", "unknown")
             logger.warning(f"Store user {email} with status '{status}' attempted to login")
             raise HTTPException(status_code=403, detail=f"Your account status is '{status}'. Only approved accounts can login.")
         
-        # Verify password
         stored_password = store_user.get("hashed_password")
         if not stored_password or not bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
-        # Create a new session
         session_id = str(uuid4())
         session_data = {
             "session_id": session_id,
@@ -102,12 +95,12 @@ async def login_store_user(response: Response, email: str = Body(...), password:
             "created_at": datetime.utcnow().isoformat()
         }
         
-        # Store session in Supabase
         session_response = supabase_client.table("store_user_sessions").insert(session_data).execute()
         if not session_response.data:
+            logger.error(f"Failed to create session for user {email}")
             raise HTTPException(status_code=500, detail="Failed to create session")
         
-        # Set session cookie
+        logger.info(f"Setting session cookie for session_id: {session_id}")
         set_session_cookie(response, session_id)
         
         return {"message": "Login successful", "status": store_user.get("status")}
@@ -117,7 +110,6 @@ async def login_store_user(response: Response, email: str = Body(...), password:
     except Exception as e:
         logger.exception(f"Store user login error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
-
 @router.get("/store-user/profile")
 async def get_store_user_profile(request: Request):
     """Get the profile of the currently logged in store user"""
@@ -160,23 +152,24 @@ async def get_store_user_profile(request: Request):
         logger.exception(f"Error fetching store user profile: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch profile: {str(e)}")
 
-@router.get("/store-user/logout")
+@router.get("/store-user/logout", dependencies=None)
 async def logout_store_user(request: Request, response: Response):
     """Logout a store user by clearing their session"""
     try:
-        # Get session ID from cookie
         session_id = request.cookies.get(SESSION_COOKIE_NAME)
+        logger.info(f"Attempting logout with session_id: {session_id}")
         if session_id:
-            # Delete session from database
-            supabase_client.table("store_user_sessions").delete().eq("session_id", session_id).execute()
+            try:
+                supabase_client.table("store_user_sessions").delete().eq("session_id", session_id).execute()
+                logger.info(f"Session {session_id} deleted successfully")
+            except Exception as e:
+                logger.warning(f"Failed to delete session {session_id}: {str(e)}")
         
-        # Clear session cookie
         delete_session_cookie(response)
-        
+        logger.info("Session cookie cleared")
         return {"message": "Logout successful"}
     
     except Exception as e:
         logger.exception(f"Store user logout error: {str(e)}")
-        # Still clear cookie even if there's an error
         delete_session_cookie(response)
         return {"message": "Logout successful"}

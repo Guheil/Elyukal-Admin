@@ -27,29 +27,24 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
     const handleLogout = async () => {
         try {
-            // Make API call to logout endpoint using the environment variable
+            // Use the correct API endpoint and method
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             console.log('Attempting logout with API URL:', apiUrl);
-            
-            const response = await fetch(`${apiUrl}/auth/logout`, {
-                method: 'POST',
+
+            const response = await fetch(`${apiUrl}/store-user/logout`, {
+                method: 'GET', // Match backend endpoint method
                 credentials: 'include', // Include cookies for session
-                headers: {
-                    'Content-Type': 'application/json',
-                },
             });
 
             console.log('Logout response status:', response.status);
-            
-            // Always clear local storage regardless of response
+
+            // Clear local storage (optional, since backend uses cookies)
             localStorage.removeItem('access_token');
-            
+
             if (response.ok) {
                 console.log('Logged out successfully');
-                // Redirect to login page
                 router.push('/seller-login');
             } else {
-                // Try to parse error response
                 let errorMessage = 'Logout failed';
                 try {
                     const errorData = await response.json();
@@ -57,14 +52,18 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                 } catch (parseError) {
                     console.error('Error parsing response:', parseError);
                 }
-                
-                console.error('Logout failed:', errorMessage);
-                // Still redirect to login page even if server-side logout fails
+
+                // Handle session-related errors gracefully
+                if (errorMessage.includes('Invalid session') || errorMessage.includes('Session expired')) {
+                    console.warn('Session already invalid or expired, proceeding with logout');
+                } else {
+                    console.error('Logout failed:', errorMessage);
+                }
                 router.push('/seller-login');
             }
         } catch (error) {
             console.error('Logout error:', error);
-            // Still clear local storage and redirect on error
+            // Clear local storage and redirect on error
             localStorage.removeItem('access_token');
             router.push('/seller-login');
         }

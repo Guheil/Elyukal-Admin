@@ -67,6 +67,30 @@ export const addStore = async (formData: FormData) => {
 };
 
 /**
+ * Create a new store for a seller
+ */
+export const createSellerStore = async (formData: FormData) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/store-user/create-store`, {
+            method: 'POST',
+            credentials: 'include', // Include cookies for session authentication
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error creating store: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store creation error:', error);
+        throw error;
+    }
+};
+
+/**
  * Fetch a store by ID
  */
 export const fetchStoreById = async (storeId: string) => {
