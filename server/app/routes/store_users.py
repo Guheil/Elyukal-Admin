@@ -80,13 +80,30 @@ async def submit_seller_application(
         # Upload files to Supabase Storage
         async def upload_file(file: UploadFile, bucket: str) -> str:
             try:
-                # Create a folder name based on the applicant's name
-                folder_name = f"{application_data.first_name.lower()}_{application_data.last_name.lower()}"
+                # Base folder name: first_name_lower_last_name_lower
+                base_folder_name = f"{application_data.first_name.lower()}_{application_data.last_name.lower()}"
+                folder_name = base_folder_name
+                suffix = 0
+
+                # Check if folder exists and increment suffix if necessary
+                while True:
+                    # List objects in the bucket to check if folder exists
+                    existing_folders = supabase_client.storage.from_(bucket).list(path="")
+                    folder_exists = any(
+                        item['name'] == folder_name
+                        for item in existing_folders
+                        if 'name' in item
+                    )
+                    if not folder_exists:
+                        break
+                    suffix += 1
+                    folder_name = f"{base_folder_name}{suffix}"
+
                 file_extension = file.filename.split('.')[-1].lower()
                 file_name = file.filename.split('/')[-1].split('\\')[-1]  # Get filename without path
                 file_name = file_name.split('.')[0]  # Remove extension
                 
-                # Create path: bucket/applicant_name/file_type.extension
+                # Create path: bucket/folder_name/file_type.extension
                 file_path = f"{folder_name}/{file_name}.{file_extension}"
                 file_content = await file.read()
                 
@@ -196,7 +213,6 @@ async def update_application_status(
 ):
     """
     Update the status of a seller application.
-    Optionally creates a store if status is 'accepted'.
     """
     try:
         # Validate status
@@ -217,22 +233,8 @@ async def update_application_status(
                 detail=f"Cannot update status. Application is already {current_status}"
             )
 
-        # Handle status update
-        update_data = {"status": status, "store_owned": None}
-        
-        if status == "accepted":
-            # Create a new store
-            store_data = {
-                "store_name": f"{check_response.data[0]['first_name']}'s Store",
-                # Add other store fields as needed
-            }
-            store_response = supabase_client.table("stores").insert(store_data).execute()
-            if not store_response.data:
-                raise HTTPException(status_code=500, detail="Failed to create store")
-            
-            update_data["store_owned"] = store_response.data[0]["store_id"]
-
-        # Update store_user
+        # Update store_user status
+        update_data = {"status": status}
         response = supabase_client.table("store_user").update(update_data).eq("id", application_id).execute()
         
         if not response.data:

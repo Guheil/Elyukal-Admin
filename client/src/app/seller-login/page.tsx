@@ -194,7 +194,7 @@ export default function SellerLoginPage() {
                         </span>
                     </h2>
                     <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: FONTS.regular, lineHeight: 1.6 }}>
-                        Showcase and sell your La Union local products through our platform. Manage your product listings, track sales, and connect with customers across the region.
+                        Showcase your La Union local products through our platform. Manage your product listings, track feedback, and connect with customers across the region.
                     </p>
 
                     <div className="grid grid-cols-2 gap-4 pt-6">

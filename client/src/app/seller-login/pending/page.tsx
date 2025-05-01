@@ -237,7 +237,7 @@ export default function SellerPendingPage() {
                         <p className="text-sm" style={{ color: COLORS.gray, fontFamily: FONTS.regular }}>
                             Questions about your application? Contact our support team at{' '}
                             <a
-                                href="mailto:support@produktoelyu-kal.com"
+                                href="mailto:support@produktoelyukal.com"
                                 className="font-medium hover:underline"
                                 style={{ color: COLORS.primary }}
                             >
