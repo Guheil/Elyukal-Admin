@@ -22,10 +22,29 @@ interface StoreDetails {
     rating?: number;
 }
 
+// Define the type for store stats
+interface StoreStats {
+    totalProducts: number;
+    totalCategories: number;
+    productViews: number;
+    totalReviews: number;
+    averageRating: number;
+    topProducts: Array<{
+        id: string;
+        name: string;
+        category: string;
+        sales: number;
+        growth: number;
+        price: number;
+    }>;
+    recentOrders: any[];
+}
+
 // Define the type for storeData
 interface StoreProfile {
     store_owned?: string | null;
     storeDetails?: StoreDetails;
+    stats?: StoreStats;
     id?: string;
     email?: string;
     first_name?: string;
@@ -46,23 +65,38 @@ export default function SellerStorePage() {
         const fetchStoreProfile = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/store-user/profile`, {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const response = await fetch(`${apiUrl}/store-user/profile`, {
                     credentials: 'include',
                 });
 
                 if (response.ok) {
                     const data = await response.json();
 
-                    // If the user has a store, fetch the complete store details
+                    // If the user has a store, fetch the complete store details and stats
                     if (data.profile?.store_owned) {
+                        // Fetch store details using the correct endpoint
                         const storeResponse = await fetch(
-                            `${process.env.NEXT_PUBLIC_API_URL}/store/${data.profile.store_owned}`,
+                            `${apiUrl}/store-user/store/${data.profile.store_owned}`,
                             { credentials: 'include' }
                         );
 
+                        // Fetch store stats for performance metrics
+                        const statsResponse = await fetch(`${apiUrl}/store-user/stats`, {
+                            credentials: 'include',
+                        });
+
                         if (storeResponse.ok) {
                             const storeDetails = await storeResponse.json();
-                            setStoreData({ ...data.profile, storeDetails: storeDetails.store });
+                            let storeData = { ...data.profile, storeDetails };
+                            
+                            // Add stats data if available
+                            if (statsResponse.ok) {
+                                const statsData = await statsResponse.json();
+                                storeData = { ...storeData, stats: statsData };
+                            }
+                            
+                            setStoreData(storeData);
                         } else {
                             setStoreData(data.profile);
                         }
@@ -319,27 +353,27 @@ export default function SellerStorePage() {
                                                         Views
                                                     </h3>
                                                     <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-                                                        -
+                                                        {storeData.stats?.productViews || 0}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">Store page views</p>
-                                                </div>
-                                                <div className="bg-primary/5 p-4 rounded-lg">
-                                                    <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
-                                                        Orders
-                                                    </h3>
-                                                    <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-                                                        -
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">Total orders</p>
+                                                    <p className="text-xs text-gray-500">Product views</p>
                                                 </div>
                                                 <div className="bg-primary/5 p-4 rounded-lg">
                                                     <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
                                                         Products
                                                     </h3>
                                                     <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-                                                        -
+                                                        {storeData.stats?.totalProducts || 0}
                                                     </p>
                                                     <p className="text-xs text-gray-500">Active products</p>
+                                                </div>
+                                                <div className="bg-primary/5 p-4 rounded-lg">
+                                                    <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
+                                                        Reviews
+                                                    </h3>
+                                                    <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
+                                                        {storeData.stats?.totalReviews || 0}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">Customer reviews</p>
                                                 </div>
                                             </div>
                                         </CardContent>
