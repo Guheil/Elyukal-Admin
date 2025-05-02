@@ -315,17 +315,17 @@ export default function SellerStorePage() {
                                                     </div>
                                                 </Button>
 
-                                                <Button
-                                                    onClick={() => router.push(`/store-user/orders`)}
-                                                    variant="outline"
-                                                    className="flex items-center justify-start gap-2 h-12 w-full"
-                                                >
-                                                    <ShoppingBag size={18} style={{ color: COLORS.primary }} />
-                                                    <div className="text-left">
-                                                        <span className="font-medium">View Orders</span>
-                                                        <p className="text-xs text-gray-500">Check customer orders</p>
-                                                    </div>
-                                                </Button>
+                                                    <Button
+                                                        onClick={() => router.push(`/store-user/location`)}
+                                                        variant="outline"
+                                                        className="flex items-center justify-start gap-2 h-12 w-full"
+                                                    >
+                                                        <MapPin size={18} style={{ color: COLORS.primary }} />
+                                                        <div className="text-left">
+                                                            <span className="font-medium">View Location</span>
+                                                            <p className="text-xs text-gray-500">Check store location</p>
+                                                        </div>
+                                                    </Button>
 
                                                 <div className="bg-gray-50 p-4 rounded-lg mt-2">
                                                     <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
