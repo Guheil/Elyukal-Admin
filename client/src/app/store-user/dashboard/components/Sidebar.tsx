@@ -113,18 +113,6 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                             label="Store" 
                             isCollapsed={isCollapsed} 
                         />
-                        <NavItem
-                            href="/store-user/products"
-                            icon={<Package size={20} />}
-                            label="Products"
-                            isCollapsed={isCollapsed}
-                        />
-                        <NavItem 
-                            href="/store-user/analytics" 
-                            icon={<BarChart3 size={20} />} 
-                            label="Analytics" 
-                            isCollapsed={isCollapsed} 
-                        />
                         <NavItem 
                             href="/store-user/profile" 
                             icon={<User size={20} />} 
