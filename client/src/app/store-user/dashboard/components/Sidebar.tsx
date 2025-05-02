@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, LayoutDashboard, Package, Users, MapPin, BarChart3, Settings, LogOut, ChevronDown, Store, User, LucideSquareActivity, ShoppingCart } from 'lucide-react';
+import { ShoppingBag, LayoutDashboard, Package, Users, MapPin, BarChart3, Settings, LogOut, ChevronDown, Store, User, LucideSquareActivity, ShoppingCart, BoxIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { COLORS } from '../../../constants/colors';
@@ -112,6 +112,12 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                             icon={<ShoppingCart size={20} />} 
                             label="Store" 
                             isCollapsed={isCollapsed} 
+                        />
+                        <NavItem
+                            href="/store-user/products"
+                            icon={<BoxIcon size={20} />}
+                            label="Products"
+                            isCollapsed={isCollapsed}
                         />
                         <NavItem 
                             href="/store-user/profile" 
