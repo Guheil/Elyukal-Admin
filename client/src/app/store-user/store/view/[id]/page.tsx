@@ -6,12 +6,40 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { COLORS } from '@/app/constants/colors';
 import { FONTS } from '@/app/constants/fonts';
-import { ArrowLeft, MapPin, Clock, Phone, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Phone, Star, Package, ShoppingBag } from 'lucide-react';
 import { useStoreUserAuth } from '@/context/StoreUserAuthContext';
 import Header from '@/app/store-user/dashboard/components/Header';
 import Sidebar from '@/app/store-user/dashboard/components/Sidebar';
 import StoreLocationMap from '@/components/ui/map/StoreLocationMap';
 import 'leaflet/dist/leaflet.css';
+import { Badge } from '@/components/ui/badge';
+
+interface Product {
+    id: number;
+    name: string;
+    description: string;
+    category: string;
+    price_min: number;
+    price_max: number;
+    ar_asset_url: string;
+    image_urls: string[];
+    address: string;
+    in_stock: boolean;
+    store_id: number;
+    stores: {
+        name: string;
+        store_id: number;
+        latitude: number;
+        longitude: number;
+        store_image: string;
+        type: string;
+        rating: number;
+        town: string;
+    };
+    average_rating: string;
+    total_reviews: number;
+    views: number;
+}
 
 interface StoreDetails {
     store_id?: string;
@@ -22,7 +50,7 @@ interface StoreDetails {
     operating_hours?: string;
     phone?: string;
     rating?: number;
-    products?: any[];
+    products?: Product[];
     reviews?: any[];
     latitude?: number;
     longitude?: number;
@@ -36,6 +64,8 @@ export default function StoreViewPage() {
 
     const [store, setStore] = useState<StoreDetails | null>(null);
     const [loading, setLoading] = useState(true);
+    const [productsLoading, setProductsLoading] = useState(true);
+    const [products, setProducts] = useState<Product[]>([]);
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     useEffect(() => {
@@ -62,8 +92,34 @@ export default function StoreViewPage() {
             }
         };
 
+        const fetchStoreProducts = async () => {
+            try {
+                setProductsLoading(true);
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const response = await fetch(`${apiUrl}/fetch_products`, {
+                    credentials: 'include',
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Filter products by store_id
+                    const storeProducts = data.products.filter(
+                        (product: Product) => product.store_id.toString() === storeId
+                    );
+                    setProducts(storeProducts);
+                } else {
+                    console.error('Failed to fetch products');
+                }
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            } finally {
+                setProductsLoading(false);
+            }
+        };
+
         if (storeId) {
             fetchStoreDetails();
+            fetchStoreProducts();
         }
     }, [storeId, router]);
 
@@ -254,6 +310,91 @@ export default function StoreViewPage() {
                                         </CardContent>
                                     </Card>
                                 </div>
+
+                                {/* Products Section */}
+                                <Card className="border-none shadow-md w-full">
+                                    <CardHeader>
+                                        <CardTitle style={{ color: COLORS.accent }}>Store Products</CardTitle>
+                                        <CardDescription>Products available in your store</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {productsLoading ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                {[...Array(4)].map((_, index) => (
+                                                    <div key={index} className="animate-pulse">
+                                                        <div className="bg-gray-200 h-40 rounded-lg mb-2"></div>
+                                                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : products.length > 0 ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                {products.map((product) => (
+                                                    <Card key={product.id} className="overflow-hidden border hover:shadow-md transition-shadow duration-300">
+                                                        <div className="relative h-40 bg-gray-100">
+                                                            {product.image_urls && product.image_urls.length > 0 ? (
+                                                                <img 
+                                                                    src={product.image_urls[0]} 
+                                                                    alt={product.name} 
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                                                    <Package size={40} className="text-gray-400" />
+                                                                </div>
+                                                            )}
+                                                            {!product.in_stock && (
+                                                                <div className="absolute top-2 right-2">
+                                                                    <Badge variant="destructive">Out of Stock</Badge>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <CardContent className="p-4">
+                                                            <h3 className="font-medium text-sm mb-1 truncate" title={product.name}>{product.name}</h3>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-sm font-semibold" style={{ color: COLORS.accent }}>
+                                                                    ₱{product.price_min.toFixed(2)}{product.price_min !== product.price_max && ` - ₱${product.price_max.toFixed(2)}`}
+                                                                </span>
+                                                                <Badge variant="outline" className="text-xs">{product.category}</Badge>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                                                <div className="flex items-center">
+                                                                    <Star size={12} className="text-yellow-400 mr-1" />
+                                                                    <span>{product.average_rating || '0'} ({product.total_reviews || 0})</span>
+                                                                </div>
+                                                                <div className="flex items-center">
+                                                                    <ShoppingBag size={12} className="mr-1" />
+                                                                    <span>{product.views || 0} views</span>
+                                                                </div>
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center py-8">
+                                                <div className="bg-gray-50 rounded-full p-4 mb-4">
+                                                    <Package size={24} className="text-gray-300" />
+                                                </div>
+                                                <h3 className="text-lg font-medium mb-2" style={{ color: COLORS.accent }}>
+                                                    No products yet
+                                                </h3>
+                                                <p className="text-sm text-gray-500 text-center max-w-md">
+                                                    Your store doesn't have any products yet. Add products to showcase them to your customers.
+                                                </p>
+                                                <Button 
+                                                    className="mt-4" 
+                                                    style={{ backgroundColor: COLORS.primary, color: 'white' }}
+                                                    onClick={() => router.push('/store-user/products')}
+                                                >
+                                                    <Package size={16} className="mr-2" />
+                                                    Add Products
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
                             </div>
                         ) : (
                             <div className="text-center py-12">
