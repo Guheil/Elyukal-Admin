@@ -172,7 +172,7 @@ export default function AddProductPage() {
       
       // Add store_id from the logged-in store user
       if (storeUser && storeUser.store_owned) {
-        formData.append('store_id', storeUser.store_owned.toString());
+        formData.append('store_owned', storeUser.store_owned.toString());
       } else {
         throw new Error('You do not have a store assigned to your account');
       }
