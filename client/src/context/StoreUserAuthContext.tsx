@@ -11,6 +11,7 @@ interface StoreUser {
     store_owned?: number; // Foreign key to stores.store_id
     store_name?: string;
     store_id?: number; // For backward compatibility
+    phone_number?: string;
     app_metadata?: Record<string, any>;
     user_metadata?: Record<string, any>;
     created_at?: string;
