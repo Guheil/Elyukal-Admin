@@ -58,6 +58,10 @@ export default function StoreUserProductsPage() {
     const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
     const [productToArchive, setProductToArchive] = useState<number | null>(null);
     const productsPerPage = 8;
+    
+    const handleAddProduct = () => {
+        router.push('/store-user/products/add');
+    };
 
     useEffect(() => {
         const loadProducts = async () => {
