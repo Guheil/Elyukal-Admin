@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,6 +44,12 @@ const productFormSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
+const forceHardRefresh = () => {
+  // Set a flag in localStorage before refreshing
+  localStorage.setItem('hasRefreshed', 'true');
+  window.location.reload();
+};
+
 export default function AddProductPage() {
   const { storeUser } = useStoreUserAuth();
   const router = useRouter();
@@ -52,6 +58,21 @@ export default function AddProductPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [arAssetFile, setArAssetFile] = useState<File | null>(null);
+  const [needsRefresh, setNeedsRefresh] = useState(true);
+  
+  // Add useEffect to trigger hard refresh on component mount, but only once
+  useEffect(() => {
+    // Check if we've already refreshed
+    const hasRefreshed = localStorage.getItem('hasRefreshed');
+    
+    if (!hasRefreshed) {
+      // Only refresh if we haven't already
+      forceHardRefresh();
+    } else {
+      // Clear the flag so next time user visits the page it will refresh again
+      localStorage.removeItem('hasRefreshed');
+    }
+  }, []);
   
   // Modal state
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -170,12 +191,23 @@ export default function AddProductPage() {
         formData.append(key, value.toString());
       });
       
-      // Add store_id from the logged-in store user
-      if (storeUser && storeUser.store_owned) {
-        formData.append('store_owned', storeUser.store_owned.toString());
-      } else {
-        throw new Error('You do not have a store assigned to your account');
+      // Check if store_owned exists in storeUser
+      if (!storeUser || !storeUser.store_owned) {
+        // Try to refresh the user data first before giving up
+        setModalType('error');
+        setModalTitle('Refreshing Store Data');
+        setModalDescription('Refreshing your store information. Please wait...');
+        setShowFeedbackModal(true);
+        
+        // Force a refresh and return early
+        setTimeout(() => {
+          forceHardRefresh();
+        }, 2000);
+        return;
       }
+      
+      // Add store_id from the logged-in store user
+      formData.append('store_owned', storeUser.store_owned.toString());
       
       // Add location data (these would come from a map component in a real implementation)
       formData.append('location_name', data.address); // Using address as location name for now
