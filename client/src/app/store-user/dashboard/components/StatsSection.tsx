@@ -13,26 +13,26 @@ export default function StatsSection({ analyticsData }: StatsSectionProps) {
             <StatsCard
                 title="Total Products"
                 value={analyticsData.totalProducts.toLocaleString()}
-                description="Products in your store"
+                description="Total products in your store"
                 icon={<Package />}
                 color={COLORS.primary}
             />
             <StatsCard
                 title="Product Categories"
                 value={analyticsData.totalCategories.toLocaleString()}
-                description="Diverse product offerings"
+                description="Unique categories offered"
                 icon={<Tag />}
                 color={COLORS.success}
             />
             <StatsCard
-                title="Product Views"
+                title="Total Views"
                 value={analyticsData.productViews.toLocaleString()}
-                description="Total product impressions"
+                description="Sum of all product views"
                 icon={<Eye />}
                 color={COLORS.gold}
             />
             <StatsCard
-                title="Product Reviews"
+                title="Total Reviews"
                 value={analyticsData.totalReviews.toLocaleString()}
                 description={`${analyticsData.averageRating} average rating`}
                 icon={<Star />}

@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { COLORS } from '../../../constants/colors';
-import { Package, TrendingUp, BarChart2, Search, Filter, Eye, Star, Edit, Trash2 } from 'lucide-react';
+import { Package, Search, Filter, Eye, Star } from 'lucide-react';
+import Link from 'next/link';
 
 interface ProductsTabProps {
   analyticsData: any;
@@ -13,7 +14,7 @@ interface ProductsTabProps {
 export default function ProductsTab({ analyticsData }: ProductsTabProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  
+
   // Get unique categories for filter
   const categories = ['all'];
   if (analyticsData.topProducts) {
@@ -24,27 +25,34 @@ export default function ProductsTab({ analyticsData }: ProductsTabProps) {
     });
   }
 
-  // Filter products based on search term and category
-  const filteredProducts = analyticsData.topProducts ? analyticsData.topProducts.filter((product: any) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  }) : [];
+  // Filter products based on search term and category, and limit to 10
+  const filteredProducts = analyticsData.topProducts ? analyticsData.topProducts
+    .filter((product: any) => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .slice(0, 10) : [];
 
   // Function to render rating stars
-  const renderRatingStars = (rating: number) => {
+  const renderRatingStars = (rating: number | string) => {
+    // Convert string rating to number if needed
+    const ratingValue = typeof rating === 'string' ? parseFloat(rating) : rating;
+    // Handle NaN case
+    const validRating = isNaN(ratingValue) ? 0 : ratingValue;
+
     return (
       <div className="flex items-center">
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
             size={14}
-            fill={i < Math.floor(rating) ? COLORS.secondary : 'transparent'}
+            fill={i < Math.floor(validRating) ? COLORS.secondary : 'transparent'}
             stroke={COLORS.secondary}
-            className={i < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300'}
+            className={i < Math.floor(validRating) ? 'text-yellow-400' : 'text-gray-300'}
           />
         ))}
-        <span className="ml-1 text-sm" style={{ color: COLORS.gray }}>{rating.toFixed(1)}</span>
+        <span className="ml-1 text-sm" style={{ color: COLORS.gray }}>{validRating.toFixed(1)}</span>
       </div>
     );
   };
@@ -55,8 +63,8 @@ export default function ProductsTab({ analyticsData }: ProductsTabProps) {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-lg font-semibold">Your Products</CardTitle>
-              <CardDescription>Manage your store products</CardDescription>
+              <CardTitle className="text-lg font-semibold">Products Overview</CardTitle>
+              <CardDescription>View your top 10 products</CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative">
@@ -83,26 +91,27 @@ export default function ProductsTab({ analyticsData }: ProductsTabProps) {
                   ))}
                 </select>
               </div>
-              <Button style={{ backgroundColor: COLORS.primary, color: 'white' }}>
-                <Package className="mr-2 h-4 w-4" />
-                Add Product
-              </Button>
+              <Link href="/store-user/products">
+                <Button style={{ backgroundColor: COLORS.primary, color: 'white' }}>
+                  <Package className="mr-2 h-4 w-4" />
+                  Add Product
+                </Button>
+              </Link>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-12 border-b py-3 px-4 font-medium" style={{ backgroundColor: COLORS.lightgray }}>
+            <div className="grid grid-cols-10 border-b py-3 px-4 font-medium" style={{ backgroundColor: COLORS.lightgray }}>
               <div className="col-span-5">Product</div>
               <div className="col-span-2 text-center">Category</div>
               <div className="col-span-1 text-center">Price</div>
               <div className="col-span-1 text-center">Views</div>
               <div className="col-span-1 text-center">Rating</div>
-              <div className="col-span-2 text-right">Actions</div>
             </div>
             {filteredProducts.length > 0 ? (
               filteredProducts.map((product: any, index: number) => (
-                <div key={index} className="grid grid-cols-12 border-b py-3 px-4 items-center">
+                <div key={index} className="grid grid-cols-10 border-b py-3 px-4 items-center">
                   <div className="col-span-5">
                     <div className="font-medium">{product.name}</div>
                     <div className="text-sm text-gray-500 truncate">{product.description || 'No description'}</div>
@@ -112,7 +121,16 @@ export default function ProductsTab({ analyticsData }: ProductsTabProps) {
                       {product.category || 'Uncategorized'}
                     </Badge>
                   </div>
-                  <div className="col-span-1 text-center">${product.price.toFixed(2)}</div>
+                  <div className="col-span-1 text-center">
+                    {product.price_min !== undefined && product.price_max !== undefined ? (
+                      product.price_min === product.price_max ?
+                        `₱${parseFloat(product.price_min).toFixed(2)}` :
+                        `₱${parseFloat(product.price_min).toFixed(2)} - ₱${parseFloat(product.price_max).toFixed(2)}`
+                    ) : product.price !== undefined && product.price !== null ?
+                      `₱${parseFloat(product.price).toFixed(2)}` :
+                      'N/A'
+                    }
+                  </div>
                   <div className="col-span-1 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <Eye size={14} style={{ color: COLORS.gray }} />
@@ -120,15 +138,7 @@ export default function ProductsTab({ analyticsData }: ProductsTabProps) {
                     </div>
                   </div>
                   <div className="col-span-1 text-center">
-                    {renderRatingStars(product.rating || 0)}
-                  </div>
-                  <div className="col-span-2 text-right space-x-2">
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" style={{ borderColor: COLORS.error, color: COLORS.error }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {renderRatingStars(product.average_rating || product.rating || 0)}
                   </div>
                 </div>
               ))
@@ -140,10 +150,12 @@ export default function ProductsTab({ analyticsData }: ProductsTabProps) {
                   {searchTerm || selectedCategory !== 'all' ? 'Try adjusting your search or filter' : 'Get started by adding a new product'}
                 </p>
                 <div className="mt-6">
-                  <Button style={{ backgroundColor: COLORS.primary, color: 'white' }}>
-                    <Package className="mr-2 h-4 w-4" />
-                    Add Product
-                  </Button>
+                  <Link href="/store-user/products">
+                    <Button style={{ backgroundColor: COLORS.primary, color: 'white' }}>
+                      <Package className="mr-2 h-4 w-4" />
+                      Add Product
+                    </Button>
+                  </Link>
                 </div>
               </div>
             )}

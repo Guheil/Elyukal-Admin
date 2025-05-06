@@ -18,6 +18,7 @@ export interface StoreUserProduct {
     average_rating: string;
     total_reviews: number;
     views: number;
+    is_archived?: boolean;
 }
 
 /**
@@ -119,7 +120,84 @@ export const updateStoreUserProduct = async (productId: number, formData: FormDa
 };
 
 /**
- * Delete a product by ID for the current store user
+ * Archive a product by ID for the current store user (soft delete)
+ */
+export const archiveStoreUserProduct = async (productId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/store-user/archive-product/${productId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error archiving product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store user product archive error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};
+
+/**
+ * Restore an archived product by ID
+ */
+export const restoreStoreUserProduct = async (productId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/store-user/restore-product/${productId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error restoring product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store user product restore error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};
+
+/**
+ * Fetch archived products for the current store user
+ */
+export const fetchArchivedStoreUserProducts = async () => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/store-user/fetch-archived-products`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching archived products: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Archived products fetch error:', error);
+        return { products: [] };
+    }
+};
+
+/**
+ * Permanently delete a product by ID for the current store user
  */
 export const deleteStoreUserProduct = async (productId: number) => {
     try {

@@ -61,61 +61,130 @@ export default function SellerStorePage() {
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchStoreProfile = async () => {
-            try {
-                setLoading(true);
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                const response = await fetch(`${apiUrl}/store-user/profile`, {
-                    credentials: 'include',
-                });
+    // Function to fetch store profile and stats
+    const fetchStoreProfile = async () => {
+        try {
+            setLoading(true);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await fetch(`${apiUrl}/store-user/profile`, {
+                credentials: 'include',
+            });
 
-                if (response.ok) {
-                    const data = await response.json();
+            if (response.ok) {
+                const data = await response.json();
 
-                    // If the user has a store, fetch the complete store details and stats
-                    if (data.profile?.store_owned) {
-                        // Fetch store details using the correct endpoint
-                        const storeResponse = await fetch(
-                            `${apiUrl}/store-user/store/${data.profile.store_owned}`,
-                            { credentials: 'include' }
-                        );
+                // If the user has a store, fetch the complete store details and stats
+                if (data.profile?.store_owned) {
+                    // Fetch store details using the correct endpoint
+                    const storeResponse = await fetch(
+                        `${apiUrl}/store-user/store/${data.profile.store_owned}`,
+                        { credentials: 'include' }
+                    );
 
-                        // Fetch store stats for performance metrics
-                        const statsResponse = await fetch(`${apiUrl}/store-user/stats`, {
-                            credentials: 'include',
-                        });
+                    // Fetch products directly to calculate accurate metrics
+                    const productsResponse = await fetch(`${apiUrl}/store-user/fetch-products`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
 
-                        if (storeResponse.ok) {
-                            const storeDetails = await storeResponse.json();
-                            let storeData = { ...data.profile, storeDetails };
-                            
-                            // Add stats data if available
+                    if (storeResponse.ok) {
+                        const storeDetails = await storeResponse.json();
+                        let storeData = { ...data.profile, storeDetails };
+
+                        // Calculate metrics from products data if available
+                        if (productsResponse.ok) {
+                            const productsData = await productsResponse.json();
+                            const products = productsData.products || [];
+
+                            // Calculate metrics
+                            const totalProducts = products.length;
+
+                            // Calculate unique categories
+                            const uniqueCategories = new Set();
+                            products.forEach((product: { category: unknown; }) => {
+                                if (product.category) {
+                                    uniqueCategories.add(product.category);
+                                }
+                            });
+                            const totalCategories = uniqueCategories.size;
+
+                            // Calculate total views
+                            const productViews = products.reduce((sum: number, product: { views: number; }) =>
+                                sum + (product.views || 0), 0);
+
+                            // Calculate total reviews
+                            const totalReviews = products.reduce((sum: number, product: { total_reviews: number; }) =>
+                                sum + (product.total_reviews || 0), 0);
+
+                            // Calculate average rating
+                            let averageRating = 0;
+                            if (totalReviews > 0) {
+                                const totalRatingSum = products.reduce((sum: number, product: { average_rating: string; total_reviews: number; }) => {
+                                    const rating = parseFloat(product.average_rating || '0');
+                                    const reviews = product.total_reviews || 0;
+                                    return sum + (rating * reviews);
+                                }, 0);
+                                averageRating = totalRatingSum / totalReviews;
+                            }
+
+                            // Create stats object from calculated metrics
+                            const calculatedStats = {
+                                totalProducts,
+                                totalCategories,
+                                productViews,
+                                totalReviews,
+                                averageRating: parseFloat(averageRating.toFixed(1))
+                            };
+
+                            console.log('Store performance metrics calculated from products:', calculatedStats);
+
+                            // Add calculated stats to store data
+                            storeData = { ...storeData, stats: calculatedStats };
+                        } else {
+                            // Fallback to stats endpoint if products fetch fails
+                            const statsResponse = await fetch(`${apiUrl}/store-user/stats`, {
+                                credentials: 'include',
+                            });
+
                             if (statsResponse.ok) {
                                 const statsData = await statsResponse.json();
                                 storeData = { ...storeData, stats: statsData };
                             }
-                            
-                            setStoreData(storeData);
-                        } else {
-                            setStoreData(data.profile);
                         }
+
+                        setStoreData(storeData);
                     } else {
                         setStoreData(data.profile);
                     }
                 } else {
-                    // Redirect to login if session is invalid
-                    router.push('/seller-login');
+                    setStoreData(data.profile);
                 }
-            } catch (error) {
-                console.error('Error fetching store profile:', error);
+            } else {
+                // Redirect to login if session is invalid
                 router.push('/seller-login');
-            } finally {
-                setLoading(false);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching store profile:', error);
+            router.push('/seller-login');
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // Initial fetch when component mounts
+    useEffect(() => {
         fetchStoreProfile();
+
+        // Set up polling interval for real-time updates (every 10 seconds)
+        const intervalId = setInterval(() => {
+            fetchStoreProfile();
+        }, 60000); // 10000 ms = 10 seconds
+
+        // Clean up interval on component unmount
+        return () => clearInterval(intervalId);
     }, [router]);
 
     const handleCreateStore = () => {
@@ -255,24 +324,45 @@ export default function SellerStorePage() {
                                                             </div>
                                                         )}
 
-                                                        {storeData.storeDetails?.rating && storeData.storeDetails.rating > 0 && (
-                                                            <div className="flex items-center gap-1 mt-2">
-                                                                {[...Array(5)].map((_, i) => (
-                                                                    <svg
-                                                                        key={i}
-                                                                        className={`w-4 h-4 ${i < Math.round(storeData.storeDetails?.rating || 0) ? 'text-yellow-400' : 'text-gray-300'
-                                                                            }`}
-                                                                        fill="currentColor"
-                                                                        viewBox="0 0 20 20"
-                                                                    >
-                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                                    </svg>
-                                                                ))}
-                                                                <span className="text-sm ml-1 text-gray-600">
-                                                                    {(storeData.storeDetails.rating || 0).toFixed(1)}
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                        {/* Rating display - shows different UI based on whether rating exists */}
+                                                        <div className="flex items-center gap-1 mt-2">
+                                                            {storeData.storeDetails?.rating && storeData.storeDetails.rating > 0 ? (
+                                                                <>
+                                                                    {/* Show filled stars based on rating */}
+                                                                    {[...Array(5)].map((_, i) => (
+                                                                        <svg
+                                                                            key={i}
+                                                                            className={`w-4 h-4 ${i < Math.round(storeData.storeDetails?.rating || 0) ? 'text-yellow-400' : 'text-gray-300'
+                                                                                }`}
+                                                                            fill="currentColor"
+                                                                            viewBox="0 0 20 20"
+                                                                        >
+                                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                        </svg>
+                                                                    ))}
+                                                                    <span className="text-sm ml-1 text-gray-600">
+                                                                        {(storeData.storeDetails.rating || 0).toFixed(1)}
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    {/* Show empty stars with a message for no ratings */}
+                                                                    {[...Array(5)].map((_, i) => (
+                                                                        <svg
+                                                                            key={i}
+                                                                            className="w-4 h-4 text-gray-300"
+                                                                            fill="currentColor"
+                                                                            viewBox="0 0 20 20"
+                                                                        >
+                                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                        </svg>
+                                                                    ))}
+                                                                    <span className="text-sm ml-1 text-gray-500 italic">
+                                                                        No ratings yet
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     <div className="flex flex-wrap gap-3 mt-4">
@@ -347,33 +437,100 @@ export default function SellerStorePage() {
                                             <CardDescription>View your store metrics and performance</CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                {/* Average Rating Card */}
                                                 <div className="bg-primary/5 p-4 rounded-lg">
                                                     <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
-                                                        Views
+                                                        Average Rating
+                                                    </h3>
+                                                    <div className="flex items-center gap-1">
+                                                        {storeData.stats?.averageRating && storeData.stats.averageRating > 0 ? (
+                                                            <>
+                                                                <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
+                                                                    {storeData.stats.averageRating.toFixed(1)}
+                                                                </p>
+                                                                <div className="flex ml-2">
+                                                                    {[...Array(5)].map((_, i) => (
+                                                                        <svg
+                                                                            key={i}
+                                                                            className={`w-4 h-4 ${i < Math.round(storeData.stats?.averageRating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+                                                                            fill="currentColor"
+                                                                            viewBox="0 0 20 20"
+                                                                        >
+                                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                        </svg>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-center">
+                                                                    <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
+                                                                        0.0
+                                                                    </p>
+                                                                    <div className="flex ml-2">
+                                                                        {[...Array(5)].map((_, i) => (
+                                                                            <svg
+                                                                                key={i}
+                                                                                className="w-4 h-4 text-gray-300"
+                                                                                fill="currentColor"
+                                                                                viewBox="0 0 20 20"
+                                                                            >
+                                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                            </svg>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-xs text-gray-500 italic mt-1">No ratings yet</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">Based on {storeData.stats?.totalReviews || 0} reviews</p>
+                                                </div>
+                                                <div className="bg-primary/5 p-4 rounded-lg">
+                                                    <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
+                                                        Total Views
                                                     </h3>
                                                     <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
                                                         {storeData.stats?.productViews || 0}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">Product views</p>
+                                                    <p className="text-xs text-gray-500">Sum of all product views</p>
                                                 </div>
                                                 <div className="bg-primary/5 p-4 rounded-lg">
                                                     <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
-                                                        Products
+                                                        Total Products
                                                     </h3>
                                                     <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
                                                         {storeData.stats?.totalProducts || 0}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">Active products</p>
+                                                    <div className="flex items-center">
+                                                        {storeData.stats?.totalProducts && storeData.stats.totalProducts > 0 ? (
+                                                            <p className="text-xs text-gray-500">Products in your store</p>
+                                                        ) : (
+                                                            <div className="flex items-center gap-1">
+                                                                <p className="text-xs text-gray-500 italic">No products yet</p>
+                                                                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-800">Add</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="bg-primary/5 p-4 rounded-lg">
                                                     <h3 className="text-sm font-medium mb-1" style={{ color: COLORS.accent }}>
-                                                        Reviews
+                                                        Total Reviews
                                                     </h3>
                                                     <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
                                                         {storeData.stats?.totalReviews || 0}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">Customer reviews</p>
+                                                    <div className="flex items-center">
+                                                        {storeData.stats?.totalReviews && storeData.stats.totalReviews > 0 ? (
+                                                            <p className="text-xs text-gray-500">Sum of all product reviews</p>
+                                                        ) : (
+                                                            <div className="flex items-center gap-1">
+                                                                <p className="text-xs text-gray-500 italic">No reviews yet</p>
+                                                                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-800"></span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </CardContent>

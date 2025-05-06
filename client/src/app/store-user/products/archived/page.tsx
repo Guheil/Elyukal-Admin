@@ -2,17 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '../dashboard/components/Sidebar';
-import Header from '../dashboard/components/Header';
+import Sidebar from '../../dashboard/components/Sidebar';
+import Header from '../../dashboard/components/Header';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useStoreUserAuth } from '@/context/StoreUserAuthContext';
-import { COLORS } from '../../constants/colors';
-import { FONTS } from '../../constants/fonts';
-import { Search, Filter, ArrowUpDown, Edit, Archive, Star, Image, Plus, ChevronLeft, ChevronRight, MessageSquare, Eye } from 'lucide-react';
+import { COLORS } from '../../../constants/colors';
+import { FONTS } from '../../../constants/fonts';
+import { Search, Filter, ArrowUpDown, Trash2, RefreshCw, Star, Image, ChevronLeft, ChevronRight, MessageSquare, Eye } from 'lucide-react';
 import { ReviewModal } from '@/components/ui/review-modal';
 
 interface Product {
@@ -40,9 +40,10 @@ interface Product {
     average_rating: string;
     total_reviews: number;
     views: number;
+    is_archived: boolean;
 }
 
-export default function StoreUserProductsPage() {
+export default function ArchivedProductsPage() {
     const { storeUser } = useStoreUserAuth();
     const router = useRouter();
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -55,47 +56,39 @@ export default function StoreUserProductsPage() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-    const [productToArchive, setProductToArchive] = useState<number | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [productToAction, setProductToAction] = useState<number | null>(null);
     const productsPerPage = 8;
 
-    const handleAddProduct = () => {
-        router.push('/store-user/products/add');
-    };
-
     useEffect(() => {
-        const loadProducts = async () => {
+        const loadArchivedProducts = async () => {
             setLoading(true);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                const response = await fetch(`${apiUrl}/fetch_products`, {
-                    credentials: 'include',
-                });
+                // Import the fetchArchivedStoreUserProducts function
+                const { fetchArchivedStoreUserProducts } = await import('../../../api/storeUserProductService');
 
-                if (response.ok) {
-                    const data = await response.json();
-                    // Filter products by the current store user's store_id
-                    if (storeUser && storeUser.store_owned) {
-                        const storeProducts = data.products.filter(
-                            (product: Product) => product.store_id.toString() === (storeUser?.store_owned?.toString() || '')
-                        );
-                        setProducts(storeProducts);
-                    } else {
-                        setProducts([]);
-                    }
+                // Call the function to fetch archived products
+                const data = await fetchArchivedStoreUserProducts();
+
+                // Filter products by the current store user's store_id
+                if (storeUser && storeUser.store_owned) {
+                    const storeProducts = data.products.filter(
+                        (product: Product) => product.store_id.toString() === (storeUser?.store_owned?.toString() || '')
+                    );
+                    setProducts(storeProducts);
                 } else {
-                    console.error('Failed to fetch products');
                     setProducts([]);
                 }
             } catch (error) {
-                console.error('Error loading products:', error);
+                console.error('Error loading archived products:', error);
                 setProducts([]);
             } finally {
                 setLoading(false);
             }
         };
 
-        loadProducts();
+        loadArchivedProducts();
     }, [storeUser]);
 
     // Filter products based on search term and category
@@ -133,43 +126,60 @@ export default function StoreUserProductsPage() {
     // Get unique categories for filter
     const categories = ['all', ...new Set(products.map(product => product.category))];
 
-    const handleEdit = (productId: number) => {
-        router.push(`/store-user/products/edit/${productId}`);
+    const handleRestore = (productId: number) => {
+        setProductToAction(productId);
+        setIsRestoreModalOpen(true);
     };
 
-    const handleArchive = (productId: number) => {
-        setProductToArchive(productId);
-        setIsArchiveModalOpen(true);
+    const handleDelete = (productId: number) => {
+        setProductToAction(productId);
+        setIsDeleteModalOpen(true);
     };
 
-    const confirmArchive = async () => {
-        if (productToArchive) {
+    const confirmRestore = async () => {
+        if (productToAction) {
             try {
-                // Import the archiveStoreUserProduct function
-                const { archiveStoreUserProduct } = await import('../../api/storeUserProductService');
+                // Import the restoreStoreUserProduct function
+                const { restoreStoreUserProduct } = await import('../../../api/storeUserProductService');
 
-                // Call the function to archive the product
-                await archiveStoreUserProduct(productToArchive);
+                // Call the function to restore the product
+                await restoreStoreUserProduct(productToAction);
 
-                // If we get here, the archiving was successful
-                // Remove the archived product from the state
-                setProducts(products.filter(product => product.id !== productToArchive));
+                // Remove the restored product from the state
+                setProducts(products.filter(product => product.id !== productToAction));
                 // Close the modal
-                setIsArchiveModalOpen(false);
-                setProductToArchive(null);
+                setIsRestoreModalOpen(false);
+                setProductToAction(null);
             } catch (error) {
-                console.error('Error archiving product:', error);
-                alert('Error archiving product. Please try again.');
-                // Close the modal even on error
-                setIsArchiveModalOpen(false);
-                setProductToArchive(null);
+                console.error('Error restoring product:', error);
+                alert('Error restoring product. Please try again.');
+                setIsRestoreModalOpen(false);
+                setProductToAction(null);
             }
         }
     };
 
-    const cancelArchive = () => {
-        setIsArchiveModalOpen(false);
-        setProductToArchive(null);
+    const confirmDelete = async () => {
+        if (productToAction) {
+            try {
+                // Import the deleteStoreUserProduct function
+                const { deleteStoreUserProduct } = await import('../../../api/storeUserProductService');
+
+                // Call the function to permanently delete the product
+                await deleteStoreUserProduct(productToAction);
+
+                // Remove the deleted product from the state
+                setProducts(products.filter(product => product.id !== productToAction));
+                // Close the modal
+                setIsDeleteModalOpen(false);
+                setProductToAction(null);
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                alert('Error deleting product. Please try again.');
+                setIsDeleteModalOpen(false);
+                setProductToAction(null);
+            }
+        }
     };
 
     const handleViewReviews = (product: Product) => {
@@ -249,35 +259,20 @@ export default function StoreUserProductsPage() {
                     <div className="flex flex-col gap-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                             <div>
-                                <h1 className="text-2xl font-bold" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>My Products</h1>
-                                <p className="text-sm mt-1" style={{ color: COLORS.gray }}>Manage and monitor all products in your store</p>
+                                <h1 className="text-2xl font-bold" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>Archived Products</h1>
+                                <p className="text-sm mt-1" style={{ color: COLORS.gray }}>View and manage your archived products</p>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <Button
-                                    className="self-start md:self-auto flex items-center gap-2 rounded-md transition-all duration-200 hover:shadow-lg"
-                                    style={{
-                                        background: `linear-gradient(to right, ${COLORS.gradient.start}, ${COLORS.gradient.middle})`,
-                                        color: 'white',
-                                        fontWeight: 'bold'
-                                    }}
-                                    onClick={() => router.push('/store-user/products/add')}
-                                >
-                                    <Plus size={18} />
-                                    Add New Product
-                                </Button>
-                                <Button
-                                    className="self-start md:self-auto flex items-center gap-2 rounded-md transition-all duration-200 hover:shadow-lg"
-                                    variant="outline"
-                                    style={{
-                                        borderColor: COLORS.lightgray,
-                                        color: COLORS.accent
-                                    }}
-                                    onClick={() => router.push('/store-user/products/archived')}
-                                >
-                                    <Archive size={18} />
-                                    Archived Products
-                                </Button>
-                            </div>
+                            <Button
+                                className="self-start md:self-auto flex items-center gap-2 rounded-md transition-all duration-200 hover:shadow-lg"
+                                style={{
+                                    backgroundColor: COLORS.accent,
+                                    color: 'white',
+                                    fontWeight: 'bold'
+                                }}
+                                onClick={() => router.push('/store-user/products')}
+                            >
+                                Back to Products
+                            </Button>
                         </div>
 
                         {/* Control Panel */}
@@ -287,7 +282,7 @@ export default function StoreUserProductsPage() {
                                     <div className="relative w-full md:w-64">
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                                         <Input
-                                            placeholder="Search products..."
+                                            placeholder="Search archived products..."
                                             className="pl-10 rounded-lg border-gray-200 focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -340,7 +335,7 @@ export default function StoreUserProductsPage() {
                             <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-sm">
                                 <div className="flex flex-col items-center">
                                     <div className="w-12 h-12 border-4 border-t-4 border-primary rounded-full animate-spin" style={{ borderTopColor: COLORS.primary, borderColor: COLORS.lightgray }}></div>
-                                    <p className="mt-4" style={{ color: COLORS.gray }}>Loading products...</p>
+                                    <p className="mt-4" style={{ color: COLORS.gray }}>Loading archived products...</p>
                                 </div>
                             </div>
                         ) : currentProducts.length === 0 ? (
@@ -349,21 +344,20 @@ export default function StoreUserProductsPage() {
                                     <div className="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                                         <Image size={24} className="text-gray-400" />
                                     </div>
-                                    <h3 className="text-lg font-medium mb-2" style={{ color: COLORS.accent }}>No products found</h3>
+                                    <h3 className="text-lg font-medium mb-2" style={{ color: COLORS.accent }}>No archived products found</h3>
                                     <p className="text-gray-500 mb-6">
                                         {searchTerm || selectedCategory !== 'all'
                                             ? 'Try adjusting your search or filter criteria'
-                                            : 'You haven\'t added any products to your store yet'}
+                                            : 'You don\'t have any archived products'}
                                     </p>
                                     <Button
                                         style={{
-                                            background: `linear-gradient(to right, ${COLORS.gradient.start}, ${COLORS.gradient.middle})`,
+                                            backgroundColor: COLORS.accent,
                                             color: 'white',
                                         }}
-                                        onClick={() => router.push('/store-user/products/add')}
+                                        onClick={() => router.push('/store-user/products')}
                                     >
-                                        <Plus size={16} className="mr-2" />
-                                        Add Your First Product
+                                        Back to Products
                                     </Button>
                                 </div>
                             </div>
@@ -390,33 +384,33 @@ export default function StoreUserProductsPage() {
                                             <Badge
                                                 className="absolute top-3 right-3 py-1 px-3 text-xs font-semibold shadow-md"
                                                 style={{
-                                                    backgroundColor: product.in_stock ? COLORS.success : COLORS.error,
+                                                    backgroundColor: COLORS.error,
                                                     color: 'white'
                                                 }}
                                             >
-                                                {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                                                Archived
                                             </Badge>
                                             <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                                                 <div className="flex justify-between gap-2">
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleEdit(product.id)}
+                                                        onClick={() => handleRestore(product.id)}
                                                         className="flex-1 flex items-center justify-center gap-1 bg-white/90 backdrop-blur-sm hover:bg-white"
                                                         style={{ borderColor: 'transparent', color: COLORS.primary }}
                                                     >
-                                                        <Edit size={14} />
-                                                        Edit
+                                                        <RefreshCw size={14} />
+                                                        Restore
                                                     </Button>
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleArchive(product.id)}
+                                                        onClick={() => handleDelete(product.id)}
                                                         className="flex-1 flex items-center justify-center gap-1 bg-white/90 backdrop-blur-sm hover:bg-white"
                                                         style={{ borderColor: 'transparent', color: COLORS.error }}
                                                     >
-                                                        <Archive size={14} />
-                                                        Archive
+                                                        <Trash2 size={14} />
+                                                        Delete
                                                     </Button>
                                                 </div>
                                             </div>
@@ -487,15 +481,26 @@ export default function StoreUserProductsPage() {
                             />
                         )}
 
-                        {/* Archive Confirmation Modal */}
+                        {/* Restore Confirmation Modal */}
                         <ConfirmationModal
-                            isOpen={isArchiveModalOpen}
-                            onClose={() => setIsArchiveModalOpen(false)}
-                            title="Archive Product"
-                            description="Are you sure you want to archive this product? Archived products will no longer be visible to customers."
-                            confirmLabel="Archive"
+                            isOpen={isRestoreModalOpen}
+                            onClose={() => setIsRestoreModalOpen(false)}
+                            title="Restore Product"
+                            description="Are you sure you want to restore this product? It will be visible to customers again."
+                            confirmLabel="Restore"
                             cancelLabel="Cancel"
-                            onConfirm={confirmArchive}
+                            onConfirm={confirmRestore}
+                        />
+
+                        {/* Delete Confirmation Modal */}
+                        <ConfirmationModal
+                            isOpen={isDeleteModalOpen}
+                            onClose={() => setIsDeleteModalOpen(false)}
+                            title="Delete Product Permanently"
+                            description="Are you sure you want to permanently delete this product? This action cannot be undone."
+                            confirmLabel="Delete Permanently"
+                            cancelLabel="Cancel"
+                            onConfirm={confirmDelete}
                         />
                     </div>
                 </main>
