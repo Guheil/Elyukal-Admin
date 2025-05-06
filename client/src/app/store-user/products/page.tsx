@@ -58,7 +58,7 @@ export default function StoreUserProductsPage() {
     const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
     const [productToArchive, setProductToArchive] = useState<number | null>(null);
     const productsPerPage = 8;
-    
+
     const handleAddProduct = () => {
         router.push('/store-user/products/add');
     };
@@ -145,28 +145,18 @@ export default function StoreUserProductsPage() {
     const confirmArchive = async () => {
         if (productToArchive) {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                // Using the same endpoint for now, but ideally would use an archive endpoint
-                const response = await fetch(`${apiUrl}/delete_product/${productToArchive}`, {
-                    method: 'DELETE',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
+                // Import the deleteStoreUserProduct function
+                const { deleteStoreUserProduct } = await import('../../api/storeUserProductService');
 
-                if (response.ok) {
-                    // Remove the archived product from the state
-                    setProducts(products.filter(product => product.id !== productToArchive));
-                    // Close the modal
-                    setIsArchiveModalOpen(false);
-                    setProductToArchive(null);
-                } else {
-                    console.error('Failed to archive product');
-                    alert('Error archiving product. Please try again.');
-                    setIsArchiveModalOpen(false);
-                    setProductToArchive(null);
-                }
+                // Call the function to delete the product
+                await deleteStoreUserProduct(productToArchive);
+
+                // If we get here, the deletion was successful
+                // Remove the archived product from the state
+                setProducts(products.filter(product => product.id !== productToArchive));
+                // Close the modal
+                setIsArchiveModalOpen(false);
+                setProductToArchive(null);
             } catch (error) {
                 console.error('Error archiving product:', error);
                 alert('Error archiving product. Please try again.');

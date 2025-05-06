@@ -164,3 +164,27 @@ export const deleteStore = async (storeId: string) => {
         throw error;
     }
 };
+ 
+/**
+ * Update a store for a seller (store user)
+ */
+export const updateUserStore = async (storeId: string, formData: FormData) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/store-user/update-store/${storeId}`, {
+            method: 'PUT',
+            credentials: 'include', // Include cookies for session authentication
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error updating store: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Store update error:', error);
+        throw error;
+    }
+};
