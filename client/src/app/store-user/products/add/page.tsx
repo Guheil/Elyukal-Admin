@@ -59,12 +59,12 @@ export default function AddProductPage() {
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [arAssetFile, setArAssetFile] = useState<File | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(true);
-  
+
   // Add useEffect to trigger hard refresh on component mount, but only once
   useEffect(() => {
     // Check if we've already refreshed
     const hasRefreshed = localStorage.getItem('hasRefreshed');
-    
+
     if (!hasRefreshed) {
       // Only refresh if we haven't already
       forceHardRefresh();
@@ -73,13 +73,13 @@ export default function AddProductPage() {
       localStorage.removeItem('hasRefreshed');
     }
   }, []);
-  
+
   // Modal state
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [modalType, setModalType] = useState<'success' | 'error'>('success');
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
-  
+
   // Municipalities data from API
     const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
     const [loadingMunicipalities, setLoadingMunicipalities] = useState(true);
@@ -102,7 +102,7 @@ export default function AddProductPage() {
 
         loadMunicipalities();
     }, []);
-  
+
   // Sample categories (would come from API in a real implementation)
   const categories = [
     'Handicrafts',
@@ -133,7 +133,7 @@ export default function AddProductPage() {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       setImageFiles(prev => [...prev, ...newFiles]);
-      
+
       // Create preview URLs
       const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
       setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
@@ -168,29 +168,29 @@ export default function AddProductPage() {
   const removeImage = (index: number) => {
     const newFiles = [...imageFiles];
     const newPreviewUrls = [...imagePreviewUrls];
-    
+
     // Revoke the object URL to avoid memory leaks
     URL.revokeObjectURL(newPreviewUrls[index]);
-    
+
     newFiles.splice(index, 1);
     newPreviewUrls.splice(index, 1);
-    
+
     setImageFiles(newFiles);
     setImagePreviewUrls(newPreviewUrls);
   };
 
   const onSubmit = async (data: ProductFormValues) => {
     setIsSubmitting(true);
-    
+
     try {
       // Create FormData object to send files and form data
       const formData = new FormData();
-      
+
       // Add all form fields
       Object.entries(data).forEach(([key, value]) => {
         formData.append(key, value.toString());
       });
-      
+
       // Check if store_owned exists in storeUser
       if (!storeUser || !storeUser.store_owned) {
         // Try to refresh the user data first before giving up
@@ -198,38 +198,38 @@ export default function AddProductPage() {
         setModalTitle('Refreshing Store Data');
         setModalDescription('Refreshing your store information. Please wait...');
         setShowFeedbackModal(true);
-        
+
         // Force a refresh and return early
         setTimeout(() => {
           forceHardRefresh();
         }, 2000);
         return;
       }
-      
+
       // Add store_id from the logged-in store user
       formData.append('store_owned', storeUser.store_owned.toString());
-      
+
       // Add location data (these would come from a map component in a real implementation)
       formData.append('location_name', data.address); // Using address as location name for now
       formData.append('latitude', '0'); // Placeholder
       formData.append('longitude', '0'); // Placeholder
-      
+
       // Add all image files
       imageFiles.forEach(file => {
         formData.append('images', file);
       });
-      
+
       // Add AR asset if available
       if (arAssetFile) {
         formData.append('ar_asset', arAssetFile);
       }
-      
+
       // Import the addStoreUserProduct function
       const { addStoreUserProduct } = await import('../../../api/storeUserProductService');
-      
+
       // Send the data to the backend
       const response = await addStoreUserProduct(formData);
-      
+
       // Show success message with modal
       setModalType('success');
       setModalTitle('Product Added Successfully');
@@ -237,7 +237,7 @@ export default function AddProductPage() {
       setShowFeedbackModal(true);
     } catch (error) {
       console.error('Error adding product:', error);
-      
+
       // Show error message with modal
       setModalType('error');
       setModalTitle('Error Adding Product');
@@ -279,8 +279,8 @@ export default function AddProductPage() {
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="mb-2 flex items-center gap-1 text-gray-500 hover:text-gray-700"
                   onClick={() => router.back()}
                 >
@@ -515,14 +515,32 @@ export default function AddProductPage() {
                               <span className="text-sm text-gray-500">Upload 3D Model</span>
                               <input
                                 type="file"
-                                accept=".glb,.gltf"
+                                accept=".glb,.usdz"
                                 onChange={handleArAssetUpload}
                                 className="hidden"
                               />
                             </label>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500">Upload a 3D model for AR viewing (GLB or GLTF format)</p>
+                        <p className="text-xs text-gray-500">Upload a 3D model for AR viewing (GLB or USDZ format)</p>
+
+                        {/* 3D Model Preview */}
+                        {arAssetFile && (
+                          <div className="mt-4">
+                            <h3 className="text-sm font-medium mb-2" style={{ color: COLORS.gray }}>3D Model Preview</h3>
+                            <div className="border rounded-lg overflow-hidden" style={{ height: '300px' }}>
+                              <ModelViewer
+                                src={arAssetFile}
+                                alt="3D model preview"
+                                poster={imagePreviewUrls[0]}
+                                className="w-full h-full"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Use your mouse to rotate and zoom the 3D model. On mobile devices, you can view the model in AR.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 

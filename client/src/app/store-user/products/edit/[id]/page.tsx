@@ -629,6 +629,24 @@ export default function EditProductPage() {
                             )}
                           </div>
                           <p className="text-xs text-gray-500">Upload a 3D model for AR viewing (GLB or USDZ format)</p>
+
+                          {/* 3D Model Preview */}
+                          {(productData?.ar_asset_url || arAssetFile) && (
+                            <div className="mt-4">
+                              <h3 className="text-sm font-medium mb-2" style={{ color: COLORS.gray }}>3D Model Preview</h3>
+                              <div className="border rounded-lg overflow-hidden" style={{ height: '300px' }}>
+                                <ModelViewer
+                                  src={arAssetFile || productData?.ar_asset_url}
+                                  alt={`3D model of ${productData?.name || 'product'}`}
+                                  poster={imagePreviewUrls[0]}
+                                  className="w-full h-full"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Use your mouse to rotate and zoom the 3D model. On mobile devices, you can view the model in AR.
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
