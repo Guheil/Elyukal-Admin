@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Sidebar from '../dashboard/components/Sidebar';
 import Header from '../dashboard/components/Header';
 import { Button } from '@/components/ui/button';
@@ -17,8 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 export default function UserProfile() {
-    const { storeUser } = useStoreUserAuth();
-    const router = useRouter();
+    const { storeUser, refreshUserData } = useStoreUserAuth();
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -29,8 +27,8 @@ export default function UserProfile() {
         last_name: '',
         email: '',
         phone_number: '',
-        joined_date: '', 
-        position: 'Seller Account', 
+        joined_date: '',
+        position: 'Seller Account',
     });
 
     useEffect(() => {
@@ -60,6 +58,8 @@ export default function UserProfile() {
         setSuccess('');
     };
 
+    // We're now using the refreshUserData function from the context
+
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -84,7 +84,8 @@ export default function UserProfile() {
             if (response.ok) {
                 setSuccess('Profile updated successfully!');
                 setIsEditing(false);
-                // Refresh user data if needed
+                // Refresh user data using the context function
+                await refreshUserData();
             } else {
                 const errorData = await response.json();
                 setError(errorData.detail || 'Failed to update profile');
@@ -106,7 +107,7 @@ export default function UserProfile() {
             <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setSidebarCollapsed(!isSidebarCollapsed)} user={storeUser} />
             <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
                 <Header user={storeUser} notificationsCount={0} />
-                
+
                 <main className="p-6">
                     {error && (
                         <div className="p-4 mb-6 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#FEECEC', color: COLORS.error }}>
@@ -139,7 +140,7 @@ export default function UserProfile() {
                                         {formData.first_name} {formData.last_name}
                                     </h1>
                                     <p className="text-gray-500 mt-1">{formData.position}</p>
-                                    
+
                                     <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
                                         <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
                                             <Calendar size={14} />
@@ -154,7 +155,7 @@ export default function UserProfile() {
 
                                 <div>
                                     {!isEditing ? (
-                                        <Button 
+                                        <Button
                                             onClick={handleEditToggle}
                                             className="flex items-center gap-2"
                                             style={{ backgroundColor: COLORS.primary, color: 'white' }}
@@ -164,14 +165,14 @@ export default function UserProfile() {
                                         </Button>
                                     ) : (
                                         <div className="flex gap-2">
-                                            <Button 
-                                                type="button" 
-                                                variant="outline" 
+                                            <Button
+                                                type="button"
+                                                variant="outline"
                                                 onClick={handleEditToggle}
                                             >
                                                 Cancel
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 onClick={handleProfileUpdate}
                                                 disabled={loading}
                                                 className="flex items-center gap-2"
@@ -197,7 +198,7 @@ export default function UserProfile() {
                                                 Personal Information
                                             </h2>
                                             <Separator className="mb-6" />
-                                            
+
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div>
                                                     <Label htmlFor="first_name">First Name</Label>
@@ -230,7 +231,7 @@ export default function UserProfile() {
                                                 Contact Details
                                             </h2>
                                             <Separator className="mb-6" />
-                                            
+
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div>
                                                     <Label htmlFor="email" className="flex items-center gap-2">
@@ -248,13 +249,13 @@ export default function UserProfile() {
                                                     <p className="text-xs mt-1 text-gray-500">Email cannot be changed</p>
                                                 </div>
                                                 <div>
-                                                    <Label htmlFor="phone" className="flex items-center gap-2">
+                                                    <Label htmlFor="phone_number" className="flex items-center gap-2">
                                                         <Phone size={16} style={{ color: COLORS.gray }} />
                                                         Phone Number
                                                     </Label>
                                                     <Input
-                                                        id="phone"
-                                                        name="phone"
+                                                        id="phone_number"
+                                                        name="phone_number"
                                                         value={formData.phone_number}
                                                         onChange={handleInputChange}
                                                         disabled={!isEditing}
@@ -268,8 +269,8 @@ export default function UserProfile() {
 
                                     {isEditing && (
                                         <div className="flex justify-end mt-6">
-                                            <Button 
-                                                type="submit" 
+                                            <Button
+                                                type="submit"
                                                 disabled={loading}
                                                 className="flex items-center gap-2"
                                                 style={{ backgroundColor: COLORS.primary, color: 'white' }}

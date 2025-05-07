@@ -8,7 +8,7 @@ import OverviewTab from './components/OverviewTab';
 import ProductsTab from './components/ProductsTab';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useStoreUserAuth } from '@/context/StoreUserAuthContext';
 import { COLORS } from '../../constants/colors';
 import { FONTS } from '../../constants/fonts';
@@ -300,7 +300,7 @@ export default function StoreUserDashboard() {
                                         <OverviewTab analyticsData={analyticsData} />
                                     </TabsContent>
                                     <TabsContent value="products">
-                                        <ProductsTab analyticsData={analyticsData} />
+                                        <ProductsTab />
                                     </TabsContent>
                                 </Tabs>
                             </>

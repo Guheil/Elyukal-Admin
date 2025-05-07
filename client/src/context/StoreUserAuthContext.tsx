@@ -23,6 +23,7 @@ interface StoreUserAuthContextType {
     loading: boolean;
     login: (email: string, password: string) => Promise<{ success: boolean; status?: string }>;
     logout: () => void;
+    refreshUserData: () => Promise<void>;
 }
 
 const StoreUserAuthContext = createContext<StoreUserAuthContextType | null>(null);
@@ -46,7 +47,7 @@ const StoreUserAuthProvider = ({ children }: StoreUserAuthProviderProps) => {
                 if (response.ok) {
                     const data = await response.json();
                     setStoreUser(data.profile);
-                    
+
                     // Handle user status
                     if (data.profile && data.profile.status) {
                         if (data.profile.status === 'pending') {
@@ -74,22 +75,22 @@ const StoreUserAuthProvider = ({ children }: StoreUserAuthProviderProps) => {
                 body: JSON.stringify({ email, password }),
                 credentials: "include", // Include cookies in the request
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || "Login failed");
             }
-            
+
             // Fetch store user profile after successful login
             try {
                 const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/store-user/profile`, {
                     credentials: "include", // Include cookies in the request
                 });
-                
+
                 if (profileResponse.ok) {
                     const profileData = await profileResponse.json();
                     setStoreUser(profileData.profile);
-                    
+
                     // Check user status and handle accordingly
                     if (profileData.profile.status === 'accepted') {
                         return { success: true, status: 'accepted' };
@@ -128,8 +129,24 @@ const StoreUserAuthProvider = ({ children }: StoreUserAuthProviderProps) => {
         }
     };
 
+    const refreshUserData = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/store-user/profile`, {
+                credentials: "include",
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setStoreUser(data.profile);
+                return data.profile;
+            }
+        } catch (error) {
+            console.error("Error refreshing user data:", error);
+        }
+    };
+
     return (
-        <StoreUserAuthContext.Provider value={{ storeUser, setStoreUser, loading, login, logout }}>
+        <StoreUserAuthContext.Provider value={{ storeUser, setStoreUser, loading, login, logout, refreshUserData }}>
             {children}
         </StoreUserAuthContext.Provider>
     );

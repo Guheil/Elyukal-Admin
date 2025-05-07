@@ -1,28 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { COLORS } from '../../../constants/colors';
-import { Eye, Star, Package } from 'lucide-react';
+import { Eye, Star, Package, BarChart2, PieChart, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+
+// Import recharts components
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    PieChart as RechartPieChart, Pie, Cell
+} from 'recharts';
 
 interface OverviewTabProps {
     analyticsData: any;
 }
 
 export default function OverviewTab({ analyticsData }: OverviewTabProps) {
-    // Debug the incoming data
-    console.log('OverviewTab received data:', {
-        hasTopProducts: Boolean(analyticsData.topProducts),
-        topProductsLength: analyticsData.topProducts ? analyticsData.topProducts.length : 0,
-        topProductsIsArray: Array.isArray(analyticsData.topProducts),
-        firstProduct: analyticsData.topProducts && Array.isArray(analyticsData.topProducts) && analyticsData.topProducts.length > 0 ? {
-            id: analyticsData.topProducts[0].id,
-            name: analyticsData.topProducts[0].name,
-            hasImages: Array.isArray(analyticsData.topProducts[0].image_urls) && analyticsData.topProducts[0].image_urls.length > 0
-        } : 'No products'
-    });
+    const [productData, setProductData] = useState<any[]>([]);
+    const [categoryData, setCategoryData] = useState<any[]>([]);
+    const [stockData, setStockData] = useState<any[]>([]);
+    const [viewsData, setViewsData] = useState<any[]>([]);
+
+    // Process data for charts when analyticsData changes
+    useEffect(() => {
+        if (analyticsData && analyticsData.topProducts) {
+            // Process top products for views chart
+            const topViewsProducts = [...analyticsData.topProducts]
+                .sort((a, b) => (b.views || 0) - (a.views || 0))
+                .slice(0, 5)
+                .map(product => ({
+                    name: product.name?.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
+                    views: product.views || 0
+                }));
+            setViewsData(topViewsProducts);
+
+            // Process category data for pie chart
+            const categoryMap = new Map();
+            analyticsData.topProducts.forEach((product: any) => {
+                const category = product.category || 'Uncategorized';
+                categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+            });
+
+            const categoryChartData = Array.from(categoryMap.entries()).map(([name, value]) => ({
+                name,
+                value
+            }));
+            setCategoryData(categoryChartData);
+
+            // Process stock data for pie chart
+            const inStock = analyticsData.topProducts.filter((p: any) => p.in_stock).length;
+            const outOfStock = analyticsData.topProducts.length - inStock;
+            setStockData([
+                { name: 'In Stock', value: inStock },
+                { name: 'Out of Stock', value: outOfStock }
+            ]);
+
+            // Process top rated products
+            const topRatedProducts = [...analyticsData.topProducts]
+                .sort((a, b) => parseFloat(b.average_rating || '0') - parseFloat(a.average_rating || '0'))
+                .slice(0, 5)
+                .map(product => ({
+                    name: product.name?.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
+                    rating: parseFloat(product.average_rating || '0')
+                }));
+            setProductData(topRatedProducts);
+        }
+    }, [analyticsData]);
 
     // Ensure products arrays are always arrays
     const topProducts = Array.isArray(analyticsData.topProducts) ? analyticsData.topProducts : [];
@@ -83,8 +128,166 @@ export default function OverviewTab({ analyticsData }: OverviewTabProps) {
         return 'N/A';
     };
 
+    // Colors for pie chart
+    const COLORS_ARRAY = [COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.success, COLORS.warning];
+    const STOCK_COLORS = [COLORS.success, COLORS.warning];
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Product Views Chart Card */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">Product Views</CardTitle>
+                    <CardDescription>Top 5 products by view count</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {viewsData.length > 0 ? (
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={viewsData}
+                                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis
+                                        dataKey="name"
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={70}
+                                        tick={{ fontSize: 12 }}
+                                    />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="views" fill={COLORS.primary} name="Views" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="text-center py-6">
+                            <BarChart2 className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className="mt-2 text-sm" style={{ color: COLORS.gray }}>No view data available</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Category Distribution Chart */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">Category Distribution</CardTitle>
+                    <CardDescription>Products by category</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {categoryData.length > 0 ? (
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RechartPieChart>
+                                    <Pie
+                                        data={categoryData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                    >
+                                        {categoryData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS_ARRAY[index % COLORS_ARRAY.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend />
+                                </RechartPieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="text-center py-6">
+                            <PieChart className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className="mt-2 text-sm" style={{ color: COLORS.gray }}>No category data available</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Stock Status Chart */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">Stock Status</CardTitle>
+                    <CardDescription>In stock vs. out of stock products</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {stockData.length > 0 && stockData.some(item => item.value > 0) ? (
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RechartPieChart>
+                                    <Pie
+                                        data={stockData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                    >
+                                        {stockData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={STOCK_COLORS[index % STOCK_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend />
+                                </RechartPieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="text-center py-6">
+                            <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className="mt-2 text-sm" style={{ color: COLORS.gray }}>No stock data available</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Product Ratings Chart */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">Product Ratings</CardTitle>
+                    <CardDescription>Top 5 products by rating</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {productData.length > 0 ? (
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={productData}
+                                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis
+                                        dataKey="name"
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={70}
+                                        tick={{ fontSize: 12 }}
+                                    />
+                                    <YAxis domain={[0, 5]} />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="rating" fill={COLORS.secondary} name="Rating" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="text-center py-6">
+                            <Star className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className="mt-2 text-sm" style={{ color: COLORS.gray }}>No rating data available</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
             {/* Top Products Card */}
             <Card>
                 <CardHeader>
