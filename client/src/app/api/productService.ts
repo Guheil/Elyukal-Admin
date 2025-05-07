@@ -229,3 +229,106 @@ export const deleteProduct = async (productId: number) => {
         throw error; // Re-throw to handle in the component
     }
 };
+
+/**
+ * Archive a product by ID (admin)
+ */
+export const archiveProduct = async (productId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/admin/archive-product/${productId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error archiving product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Product archive error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};
+
+/**
+ * Fetch archived products (admin)
+ */
+export const fetchArchivedProducts = async () => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/admin/fetch-archived-products`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching archived products: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Archived products fetch error:', error);
+        return { products: [] };
+    }
+};
+
+/**
+ * Restore an archived product (admin)
+ */
+export const restoreProduct = async (productId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/admin/restore-product/${productId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error restoring product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Product restore error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};
+
+/**
+ * Permanently delete an archived product (admin)
+ */
+export const permanentlyDeleteProduct = async (productId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/admin/permanently-delete-product/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error permanently deleting product: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Product permanent delete error:', error);
+        throw error; // Re-throw to handle in the component
+    }
+};

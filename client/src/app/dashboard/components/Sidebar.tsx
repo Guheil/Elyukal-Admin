@@ -30,7 +30,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             // Make API call to logout endpoint using the environment variable
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             console.log('Attempting logout with API URL:', apiUrl);
-            
+
             const response = await fetch(`${apiUrl}/auth/logout`, {
                 method: 'POST',
                 credentials: 'include', // Include cookies for session
@@ -40,10 +40,10 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             });
 
             console.log('Logout response status:', response.status);
-            
+
             // Always clear local storage regardless of response
             localStorage.removeItem('access_token');
-            
+
             if (response.ok) {
                 console.log('Logged out successfully');
                 // Redirect to login page
@@ -57,7 +57,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                 } catch (parseError) {
                     console.error('Error parsing response:', parseError);
                 }
-                
+
                 console.error('Logout failed:', errorMessage);
                 // Still redirect to login page even if server-side logout fails
                 router.push('/login');
@@ -84,11 +84,11 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                     <div className="flex items-center space-x-2">
                         <div className="w-10 h-10 bg-transparent rounded-full flex items-center justify-center  shadow-lg">
                             <Image
-                                src={logoImage} 
+                                src={logoImage}
                                 alt="Shopping Bag"
-                                width={40} 
-                                height={40} 
-                                className="rounded-full object-cover" 
+                                width={40}
+                                height={40}
+                                className="rounded-full object-cover"
                             />
                         </div>
                         {!isCollapsed && (
@@ -126,7 +126,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                         <div className="flex flex-col items-center gap-2">
                             <Avatar className="w-10 h-10 border-2 border-white">
                                 <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
-                                    {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 
+                                    {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() :
                                      user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
                                 </AvatarFallback>
                             </Avatar>
@@ -144,14 +144,14 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                         <div className="flex items-center gap-3">
                             <Avatar className="w-10 h-10 border-2 border-white">
                                 <AvatarFallback style={{ backgroundColor: COLORS.gold, color: COLORS.accent }}>
-                                    {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 
+                                    {user && 'first_name' in user && user.first_name ? user.first_name.charAt(0).toUpperCase() :
                                      user && 'email' in user ? user.email.charAt(0).toUpperCase() : 'DA'}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0 mr-2">
                                 <p className="text-sm font-medium text-white truncate">
-                                    {user && 'first_name' in user && 'last_name' in user ? 
-                                        `${user.first_name} ${user.last_name}` : 
+                                    {user && 'first_name' in user && 'last_name' in user ?
+                                        `${user.first_name} ${user.last_name}` :
                                         user && 'email' in user ? user.email : "No Name Available"}
                                 </p>
                                 <p className="text-xs opacity-75 text-white">Administrator</p>

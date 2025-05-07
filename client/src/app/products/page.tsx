@@ -13,7 +13,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
-import { Search, Filter, ArrowUpDown, Edit, Trash2, Star, Image, Plus, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Edit, Trash2, Star, Image, Plus, ChevronLeft, ChevronRight, MessageSquare, Archive } from 'lucide-react';
 import { fetchProducts } from '../api/productService';
 import { Product } from '../api/productService';
 import { ReviewModal } from '@/components/ui/review-modal';
@@ -33,6 +33,8 @@ export default function ProductsPage() {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<number | null>(null);
+    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+    const [productToArchive, setProductToArchive] = useState<number | null>(null);
     const productsPerPage = 8;
 
     useEffect(() => {
@@ -105,7 +107,7 @@ export default function ProductsPage() {
         setProductToDelete(productId);
         setIsDeleteModalOpen(true);
     };
-    
+
     const confirmDelete = async () => {
         if (productToDelete) {
             try {
@@ -128,10 +130,43 @@ export default function ProductsPage() {
             }
         }
     };
-    
+
     const cancelDelete = () => {
         setIsDeleteModalOpen(false);
         setProductToDelete(null);
+    };
+
+    const handleArchive = (productId: number) => {
+        setProductToArchive(productId);
+        setIsArchiveModalOpen(true);
+    };
+
+    const confirmArchive = async () => {
+        if (productToArchive) {
+            try {
+                const { archiveProduct } = await import('../api/productService');
+                await archiveProduct(productToArchive);
+                // Refresh the products list
+                const response = await fetchProducts();
+                if (response && response.products) {
+                    setProducts(response.products);
+                }
+                // Close the modal
+                setIsArchiveModalOpen(false);
+                setProductToArchive(null);
+            } catch (error) {
+                console.error('Error archiving product:', error);
+                alert('Error archiving product. Please try again.');
+                // Close the modal even on error
+                setIsArchiveModalOpen(false);
+                setProductToArchive(null);
+            }
+        }
+    };
+
+    const cancelArchive = () => {
+        setIsArchiveModalOpen(false);
+        setProductToArchive(null);
     };
 
     const handleViewReviews = (product: Product) => {
@@ -214,18 +249,32 @@ export default function ProductsPage() {
                                 <h1 className="text-2xl font-bold" style={{ color: COLORS.accent, fontFamily: FONTS.bold }}>Products Management</h1>
                                 <p className="text-sm mt-1" style={{ color: COLORS.gray }}>Manage and monitor all products in the marketplace</p>
                             </div>
-                            <Button
-                                className="self-start md:self-auto flex items-center gap-2 rounded-md transition-all duration-200 hover:shadow-lg"
-                                style={{
-                                    background: `linear-gradient(to right, ${COLORS.gradient.start}, ${COLORS.gradient.middle})`,
-                                    color: 'white',
-                                    fontWeight: 'bold'
-                                }}
-                                onClick={() => router.push('/products/add')}
-                            >
-                                <Plus size={18} />
-                                Add New Product
-                            </Button>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Button
+                                    className="self-start md:self-auto flex items-center gap-2 rounded-md transition-all duration-200 hover:shadow-lg"
+                                    style={{
+                                        background: `linear-gradient(to right, ${COLORS.gradient.start}, ${COLORS.gradient.middle})`,
+                                        color: 'white',
+                                        fontWeight: 'bold'
+                                    }}
+                                    onClick={() => router.push('/products/add')}
+                                >
+                                    <Plus size={18} />
+                                    Add New Product
+                                </Button>
+                                <Button
+                                    className="self-start md:self-auto flex items-center gap-2 rounded-md transition-all duration-200 hover:shadow-lg"
+                                    variant="outline"
+                                    style={{
+                                        borderColor: COLORS.lightgray,
+                                        color: COLORS.accent
+                                    }}
+                                    onClick={() => router.push('/archived-products')}
+                                >
+                                    <Archive size={18} />
+                                    Archived Products
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Control Panel */}
@@ -339,12 +388,12 @@ export default function ProductsPage() {
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => handleDelete(product.id)}
+                                                                onClick={() => handleArchive(product.id)}
                                                                 className="flex-1 flex items-center justify-center gap-1 bg-white/90 backdrop-blur-sm hover:bg-white"
-                                                                style={{ borderColor: 'transparent', color: COLORS.error }}
+                                                                style={{ borderColor: 'transparent', color: COLORS.accent }}
                                                             >
-                                                                <Trash2 size={14} />
-                                                                Delete
+                                                                <Archive size={14} />
+                                                                Archive
                                                             </Button>
                                                         </div>
                                                     </div>
@@ -401,7 +450,7 @@ export default function ProductsPage() {
 
                         {/* Pagination */}
                         {!loading && sortedProducts.length > 0 && renderPagination()}
-                        
+
                         {/* Review Modal */}
                         {selectedProduct && (
                             <ReviewModal
@@ -411,7 +460,7 @@ export default function ProductsPage() {
                                 productName={selectedProduct.name}
                             />
                         )}
-                        
+
                         {/* Delete Confirmation Modal */}
                         <ConfirmationModal
                             isOpen={isDeleteModalOpen}
@@ -421,6 +470,17 @@ export default function ProductsPage() {
                             confirmLabel="Delete"
                             cancelLabel="Cancel"
                             onConfirm={confirmDelete}
+                        />
+
+                        {/* Archive Confirmation Modal */}
+                        <ConfirmationModal
+                            isOpen={isArchiveModalOpen}
+                            onClose={() => setIsArchiveModalOpen(false)}
+                            title="Confirm Archive"
+                            description="Are you sure you want to archive this product? It will be moved to the archived products section and removed from the marketplace."
+                            confirmLabel="Archive"
+                            cancelLabel="Cancel"
+                            onConfirm={confirmArchive}
                         />
                     </div>
                 </main>
