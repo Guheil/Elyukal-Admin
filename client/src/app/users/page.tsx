@@ -8,13 +8,22 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from '@/context/AuthContext';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
-import { Search, Filter, ArrowUpDown, Edit, Trash2, Mail, User as UserIcon, Calendar, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
-import { fetchUsers, User } from '../api/userService';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { Search, ArrowUpDown, Edit, Mail, User as UserIcon, Calendar, ChevronLeft, ChevronRight, Ban, AlertTriangle } from 'lucide-react';
+import { fetchUsers, User, banUser } from '../api/userService';
 import { FeedbackModal } from '@/components/ui/feedback-modal';
+import { toast } from 'react-hot-toast';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+} from '@/components/ui/modal';
 
 export default function UsersPage() {
     const { user } = useAuth();
@@ -27,6 +36,17 @@ export default function UsersPage() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const usersPerPage = 8;
+
+    // Ban user modal state
+    const [isBanModalOpen, setIsBanModalOpen] = useState(false);
+    const [userToBan, setUserToBan] = useState<User | null>(null);
+    const [banReason, setBanReason] = useState('');
+    const [isBanning, setIsBanning] = useState(false);
+
+    // Feedback modal state
+    const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+    const [feedbackMessage, setFeedbackMessage] = useState('');
+    const [feedbackType, setFeedbackType] = useState<'success' | 'error'>('success');
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -94,9 +114,55 @@ export default function UsersPage() {
         router.push(`/users/edit/${encodeURIComponent(email)}`);
     };
 
-    const handleDelete = (email: string) => {
-        // This will be implemented later
-        console.log('Delete user:', email);
+    const handleBanClick = (userToBan: User) => {
+        setUserToBan(userToBan);
+        setBanReason('');
+        setIsBanModalOpen(true);
+    };
+
+    const handleBanConfirm = async () => {
+        if (!userToBan) return;
+
+        try {
+            setIsBanning(true);
+            const result = await banUser(userToBan.email, banReason);
+
+            // Show success feedback
+            setFeedbackType('success');
+            setFeedbackMessage(result.message || `User ${userToBan.first_name} ${userToBan.last_name} has been banned successfully.`);
+
+            // Remove the banned user from the list
+            setUsers(prevUsers => prevUsers.filter(u => u.email !== userToBan.email));
+
+            // Close the ban modal
+            setIsBanModalOpen(false);
+
+            // Show the feedback modal
+            setIsFeedbackModalOpen(true);
+
+            // Show toast notification
+            toast.success(`User ${userToBan.first_name} ${userToBan.last_name} has been banned.`);
+        } catch (error) {
+            console.error('Error banning user:', error);
+
+            // Show error feedback
+            setFeedbackType('error');
+            setFeedbackMessage(error instanceof Error ? error.message : 'An unknown error occurred while banning the user.');
+
+            // Show the feedback modal
+            setIsFeedbackModalOpen(true);
+
+            // Show toast notification
+            toast.error('Failed to ban user. Please try again.');
+        } finally {
+            setIsBanning(false);
+        }
+    };
+
+    const handleBanCancel = () => {
+        setIsBanModalOpen(false);
+        setUserToBan(null);
+        setBanReason('');
     };
 
     const formatDate = (dateString: string) => {
@@ -266,7 +332,7 @@ export default function UsersPage() {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                currentUsers.map((user, index) => (
+                                                currentUsers.map((user) => (
                                                     <tr key={user.email} className="hover:bg-gray-50">
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                             <div className="flex items-center gap-2">
@@ -306,10 +372,10 @@ export default function UsersPage() {
                                                                     size="sm"
                                                                     className="flex items-center gap-1 rounded-md"
                                                                     style={{ borderColor: COLORS.lightgray, color: COLORS.error }}
-                                                                    onClick={() => handleDelete(user.email)}
+                                                                    onClick={() => handleBanClick(user)}
                                                                 >
-                                                                    <Trash2 size={14} />
-                                                                    Delete
+                                                                    <Ban size={14} />
+                                                                    Ban
                                                                 </Button>
                                                             </div>
                                                         </td>
@@ -321,12 +387,85 @@ export default function UsersPage() {
                                 </div>
                             </CardContent>
                         </Card>
-                        
+
                         {/* Pagination */}
                         {!loading && currentUsers.length > 0 && renderPagination()}
                     </div>
                 </main>
             </div>
+
+            {/* Custom Ban User Modal */}
+            <Modal open={isBanModalOpen} onOpenChange={handleBanCancel}>
+                <ModalContent className="sm:max-w-md">
+                    <ModalHeader>
+                        <div className="flex items-center gap-3">
+                            <AlertTriangle className="h-6 w-6" style={{ color: COLORS.error }} />
+                            <ModalTitle
+                                style={{
+                                    color: COLORS.error,
+                                    fontFamily: FONTS.bold
+                                }}
+                            >
+                                Ban User
+                            </ModalTitle>
+                        </div>
+                        <ModalDescription>
+                            Are you sure you want to ban <span className="font-semibold">{userToBan?.first_name} {userToBan?.last_name}</span>?
+                            This action will prevent the user from accessing the platform.
+                        </ModalDescription>
+                    </ModalHeader>
+
+                    <div className="p-4 pt-0">
+                        <div className="space-y-2">
+                            <label htmlFor="banReason" className="block text-sm font-medium text-gray-700">
+                                Reason for banning (optional)
+                            </label>
+                            <Textarea
+                                id="banReason"
+                                value={banReason}
+                                onChange={(e) => setBanReason(e.target.value)}
+                                placeholder="Enter reason for banning this user..."
+                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
+                                rows={3}
+                            />
+                        </div>
+                    </div>
+
+                    <ModalFooter className="flex justify-between">
+                        <Button
+                            variant="outline"
+                            onClick={handleBanCancel}
+                            style={{
+                                borderColor: COLORS.lightgray,
+                                color: COLORS.gray,
+                                fontFamily: FONTS.regular
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleBanConfirm}
+                            disabled={isBanning}
+                            style={{
+                                backgroundColor: COLORS.error,
+                                color: COLORS.white,
+                                fontFamily: FONTS.semibold
+                            }}
+                        >
+                            {isBanning ? 'Banning...' : 'Ban User'}
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+            {/* Feedback Modal */}
+            <FeedbackModal
+                isOpen={isFeedbackModalOpen}
+                onClose={() => setIsFeedbackModalOpen(false)}
+                title={feedbackType === 'success' ? 'Success' : 'Error'}
+                description={feedbackMessage}
+                type={feedbackType}
+            />
         </div>
     );
 }

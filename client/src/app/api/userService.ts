@@ -110,3 +110,31 @@ export const getTotalNumberOfUsers = async (): Promise<{ total_users: number }> 
         throw error;
     }
 };
+
+/**
+ * Ban a user by email
+ */
+export const banUser = async (email: string, reason?: string): Promise<{ success: boolean; message: string }> => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/ban_user/${email}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reason }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || `Error banning user: ${response.status}`);
+        }
+
+        return data;
+    } catch (error) {
+        console.error('User ban error:', error);
+        throw error;
+    }
+};
