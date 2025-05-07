@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
 from app.db.database import supabase_client
 from app.auth.auth_handler import get_current_user
+from app.utils.simple_email_service import send_seller_application_status_email
 import bcrypt
 import logging
 from uuid import uuid4
@@ -102,22 +103,22 @@ async def submit_seller_application(
                 file_extension = file.filename.split('.')[-1].lower()
                 file_name = file.filename.split('/')[-1].split('\\')[-1]  # Get filename without path
                 file_name = file_name.split('.')[0]  # Remove extension
-                
+
                 # Create path: bucket/folder_name/file_type.extension
                 file_path = f"{folder_name}/{file_name}.{file_extension}"
                 file_content = await file.read()
-                
+
                 # Upload file
                 supabase_client.storage.from_(bucket).upload(
                     file_path,
                     file_content,
                     file_options={"content-type": file.content_type}
                 )
-                
+
                 # Return the file path
                 logger.info(f"Uploaded file to {bucket}/{file_path}")
                 return file_path
-                
+
             except Exception as e:
                 logger.error(f"Failed to upload file to {bucket}: {str(e)}")
                 raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
@@ -164,7 +165,7 @@ async def get_seller_applications():
         ).execute()
         if not response.data:
             return []
-        
+
         # Add public URLs for file fields
         for application in response.data:
             if application.get('business_permit'):
@@ -173,7 +174,7 @@ async def get_seller_applications():
                 application['valid_id'] = supabase_client.storage.from_("valid-ids").get_public_url(application['valid_id'])
             if application.get('dti_registration'):
                 application['dti_registration'] = supabase_client.storage.from_("dti").get_public_url(application['dti_registration'])
-        
+
         return response.data
     except Exception as e:
         logger.exception(f"Error fetching seller applications: {str(e)}")
@@ -187,10 +188,10 @@ async def get_seller_application(application_id: str):
             "id, first_name, last_name, email, phone_number, status, created_at, "
             "business_permit, valid_id, dti_registration, store_owned"
         ).eq("id", application_id).single().execute()
-        
+
         if not response.data:
             raise HTTPException(status_code=404, detail="Application not found")
-        
+
         # Get public URLs for documents
         data = response.data
         if data.get('business_permit'):
@@ -199,7 +200,7 @@ async def get_seller_application(application_id: str):
             data['valid_id'] = supabase_client.storage.from_("valid-ids").get_public_url(data['valid_id'])
         if data.get('dti_registration'):
             data['dti_registration'] = supabase_client.storage.from_("dti").get_public_url(data['dti_registration'])
-        
+
         return data
     except Exception as e:
         logger.exception(f"Error fetching seller application: {str(e)}")
@@ -217,16 +218,18 @@ async def update_application_status(
     try:
         # Validate status
         status = status_update.status.lower()
-        
+
         # Check if application exists and current status
         check_response = supabase_client.table("store_user").select("*").eq("id", application_id).execute()
         if not check_response.data:
             raise HTTPException(status_code=404, detail="Application not found")
 
-        current_status = check_response.data[0].get('status', '').lower()
+        application = check_response.data[0]
+        current_status = application.get('status', '').lower()
+
         if current_status == status:
-            return check_response.data[0]  # No change needed
-        
+            return application  # No change needed
+
         if current_status != 'pending':
             raise HTTPException(
                 status_code=400,
@@ -236,14 +239,60 @@ async def update_application_status(
         # Update store_user status
         update_data = {"status": status}
         response = supabase_client.table("store_user").update(update_data).eq("id", application_id).execute()
-        
+
         if not response.data:
             logger.error(f"Failed to update status for application {application_id}")
             raise HTTPException(status_code=500, detail="Failed to update application status")
-            
+
+        # Send email notification
+        logger.info(f"Attempting to send email notification for application {application_id}")
+
+        # Extract and validate email
+        recipient_email = application.get('email')
+        if not recipient_email:
+            logger.error(f"No email found for application {application_id}")
+            email_sent = False
+        else:
+            logger.info(f"Sending email to: {recipient_email}")
+
+            # Extract name information
+            first_name = application.get('first_name', '')
+            last_name = application.get('last_name', '')
+
+            if not first_name or not last_name:
+                logger.warning(f"Missing name information for application {application_id}: first_name={first_name}, last_name={last_name}")
+
+            # Send the email
+            try:
+                email_sent = send_seller_application_status_email(
+                    email=recipient_email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    status=status
+                )
+                logger.info(f"Email sending result: {email_sent}")
+            except Exception as email_err:
+                logger.error(f"Exception during email sending: {str(email_err)}")
+                email_sent = False
+
+        if email_sent:
+            logger.info(f"Email notification sent to {recipient_email} about application status: {status}")
+        else:
+            logger.warning(f"Failed to send email notification to {recipient_email}")
+            # Try to log application data for debugging
+            try:
+                logger.error(f"Application data: {application}")
+            except Exception as log_err:
+                logger.error(f"Could not log application data: {str(log_err)}")
+
         logger.info(f"Successfully updated application {application_id} status to {status}")
-        return response.data[0]
-        
+
+        # Add email status to response
+        updated_application = response.data[0]
+        updated_application['email_notification_sent'] = email_sent
+
+        return updated_application
+
     except Exception as e:
         logger.exception(f"Error updating application status: {str(e)}")
         if isinstance(e, HTTPException):

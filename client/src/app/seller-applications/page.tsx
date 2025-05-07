@@ -81,28 +81,73 @@ export default function SellerApplicationsPage() {
         try {
             setIsUpdatingStatus(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+            console.log(`Sending status update request to ${apiUrl}/seller-applications/${applicationToAction.id}/status`);
+            console.log(`Request body:`, { status: applicationToAction.action });
+
             const response = await fetch(`${apiUrl}/seller-applications/${applicationToAction.id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
                 credentials: 'include',
                 body: JSON.stringify({ status: applicationToAction.action }),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update application status');
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Failed to update application status: ${response.status} ${response.statusText}`);
+            }
+
+            // Parse the response
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+
+            let result;
+            try {
+                result = JSON.parse(responseText);
+                console.log('Parsed response:', result);
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+                throw new Error('Invalid response format from server');
             }
 
             // Show success toast notification
             const actionText = applicationToAction.action === 'accepted' ? 'accepted' : 'rejected';
-            toast.success(`Application successfully ${actionText}`);
-            
+
+            // Force toast to display regardless of email status
+            toast.success(`Application successfully ${actionText}!`, {
+                duration: 5000,
+                position: 'top-center',
+            });
+
+            // Add additional toast about email status
+            if (result && result.email_notification_sent === true) {
+                setTimeout(() => {
+                    toast.success(`Email notification sent to applicant.`, {
+                        duration: 4000,
+                        position: 'top-center',
+                    });
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    toast.error(`Email notification could not be sent to applicant.`, {
+                        duration: 4000,
+                        position: 'top-center',
+                    });
+                }, 500);
+            }
+
             // Refresh the applications list
             fetchApplications();
         } catch (error) {
             console.error('Error updating application status:', error);
-            toast.error(`Failed to update application status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to update application status: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+                duration: 5000,
+                position: 'top-center',
+            });
         } finally {
             setIsConfirmModalOpen(false);
             setApplicationToAction(null);
@@ -168,13 +213,13 @@ export default function SellerApplicationsPage() {
         if (applicationToAction.action === 'accepted') {
             return {
                 title: 'Confirm Approval',
-                description: 'Are you sure you want to approve this seller application? The seller will be notified and granted access to the platform.',
+                description: 'Are you sure you want to approve this seller application? An email notification will be sent to the applicant, and they will be granted access to the platform.',
                 confirmLabel: isUpdatingStatus ? 'Processing...' : 'Approve'
             };
         } else {
             return {
                 title: 'Confirm Rejection',
-                description: 'Are you sure you want to reject this seller application? The applicant will be notified of the rejection.',
+                description: 'Are you sure you want to reject this seller application? An email notification will be sent to inform the applicant of the rejection.',
                 confirmLabel: isUpdatingStatus ? 'Processing...' : 'Reject'
             };
         }
