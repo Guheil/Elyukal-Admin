@@ -202,7 +202,7 @@ export const fetchArchivedStoreUserProducts = async () => {
 export const deleteStoreUserProduct = async (productId: number) => {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/store-user/delete-product/${productId}`, {
+        const response = await fetch(`${apiUrl}/store-user/permanently-delete-product/${productId}`, {
             method: 'DELETE',
             credentials: 'include',
             headers: {

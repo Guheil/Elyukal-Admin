@@ -821,6 +821,7 @@ export default function ApplicationDetailsPage() {
                     confirmLabel={getConfirmationData().confirmLabel}
                     cancelLabel="Cancel"
                     onConfirm={confirmStatusUpdate}
+                    type={actionType === 'accepted' ? 'success' : 'error'}
                 />
             )}
         </div>

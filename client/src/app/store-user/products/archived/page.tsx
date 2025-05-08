@@ -14,6 +14,7 @@ import { COLORS } from '../../../constants/colors';
 import { FONTS } from '../../../constants/fonts';
 import { Search, Filter, ArrowUpDown, Trash2, RefreshCw, Star, Image, ChevronLeft, ChevronRight, MessageSquare, Eye } from 'lucide-react';
 import { ReviewModal } from '@/components/ui/review-modal';
+import { toast } from 'react-hot-toast';
 
 interface Product {
     id: number;
@@ -147,12 +148,21 @@ export default function ArchivedProductsPage() {
 
                 // Remove the restored product from the state
                 setProducts(products.filter(product => product.id !== productToAction));
+
+                // Show success toast
+                toast.success('Product restored successfully');
+
                 // Close the modal
                 setIsRestoreModalOpen(false);
                 setProductToAction(null);
             } catch (error) {
                 console.error('Error restoring product:', error);
-                alert('Error restoring product. Please try again.');
+
+                // Show error toast with more details
+                toast.error(error instanceof Error
+                    ? `Error: ${error.message}`
+                    : 'Failed to restore product. Please try again.');
+
                 setIsRestoreModalOpen(false);
                 setProductToAction(null);
             }
@@ -170,12 +180,21 @@ export default function ArchivedProductsPage() {
 
                 // Remove the deleted product from the state
                 setProducts(products.filter(product => product.id !== productToAction));
+
+                // Show success toast
+                toast.success('Product permanently deleted successfully');
+
                 // Close the modal
                 setIsDeleteModalOpen(false);
                 setProductToAction(null);
             } catch (error) {
                 console.error('Error deleting product:', error);
-                alert('Error deleting product. Please try again.');
+
+                // Show error toast with more details
+                toast.error(error instanceof Error
+                    ? `Error: ${error.message}`
+                    : 'Failed to delete product. Please try again.');
+
                 setIsDeleteModalOpen(false);
                 setProductToAction(null);
             }
@@ -490,6 +509,7 @@ export default function ArchivedProductsPage() {
                             confirmLabel="Restore"
                             cancelLabel="Cancel"
                             onConfirm={confirmRestore}
+                            type="success"
                         />
 
                         {/* Delete Confirmation Modal */}

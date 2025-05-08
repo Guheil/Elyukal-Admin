@@ -437,7 +437,7 @@ export default function ArchivedProductsPage() {
 
                         {/* Pagination */}
                         {!loading && sortedProducts.length > 0 && renderPagination()}
-                        
+
                         {/* Review Modal */}
                         {selectedProduct && (
                             <ReviewModal
@@ -447,7 +447,7 @@ export default function ArchivedProductsPage() {
                                 productName={selectedProduct.name}
                             />
                         )}
-                        
+
                         {/* Restore Confirmation Modal */}
                         <ConfirmationModal
                             isOpen={isRestoreModalOpen}
@@ -457,8 +457,9 @@ export default function ArchivedProductsPage() {
                             confirmLabel="Restore"
                             cancelLabel="Cancel"
                             onConfirm={confirmRestore}
+                            type="success"
                         />
-                        
+
                         {/* Delete Confirmation Modal */}
                         <ConfirmationModal
                             isOpen={isDeleteModalOpen}

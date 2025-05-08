@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { COLORS } from '@/app/constants/colors';
 import { FONTS } from '@/app/constants/fonts';
 import {
@@ -22,6 +22,7 @@ interface ConfirmationModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
+  type?: 'warning' | 'success' | 'error';
 }
 
 export function ConfirmationModal({
@@ -32,16 +33,23 @@ export function ConfirmationModal({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   onConfirm,
+  type = 'warning',
 }: ConfirmationModalProps) {
   return (
     <Modal open={isOpen} onOpenChange={onClose}>
       <ModalContent className="sm:max-w-md">
         <ModalHeader>
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-6 w-6" style={{ color: COLORS.error }} />
-            <ModalTitle 
-              style={{ 
-                color: COLORS.error,
+            {type === 'success' ? (
+              <CheckCircle className="h-6 w-6" style={{ color: COLORS.success }} />
+            ) : type === 'error' ? (
+              <XCircle className="h-6 w-6" style={{ color: COLORS.error }} />
+            ) : (
+              <AlertTriangle className="h-6 w-6" style={{ color: COLORS.warning }} />
+            )}
+            <ModalTitle
+              style={{
+                color: type === 'success' ? COLORS.success : type === 'error' ? COLORS.error : COLORS.warning,
                 fontFamily: FONTS.bold
               }}
             >
@@ -51,10 +59,10 @@ export function ConfirmationModal({
           <ModalDescription>{description}</ModalDescription>
         </ModalHeader>
         <ModalFooter className="flex justify-between">
-          <Button 
+          <Button
             variant="outline"
             onClick={onClose}
-            style={{ 
+            style={{
               borderColor: COLORS.lightgray,
               color: COLORS.gray,
               fontFamily: FONTS.regular
@@ -62,10 +70,10 @@ export function ConfirmationModal({
           >
             {cancelLabel}
           </Button>
-          <Button 
+          <Button
             onClick={onConfirm}
-            style={{ 
-              backgroundColor: COLORS.error,
+            style={{
+              backgroundColor: type === 'success' ? COLORS.success : type === 'error' ? COLORS.error : COLORS.warning,
               color: COLORS.white,
               fontFamily: FONTS.semibold
             }}
